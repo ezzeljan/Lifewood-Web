@@ -1,0 +1,185 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&display=swap');
+
+/* Brand Color Variables */
+:root {
+  --paper: #ffffff;
+  --white: #F9F7F7;
+  --sea-salt: #FFB347;
+  --saffron: #FFC370;
+  --castleton-green: #046241;
+  --dark-serpent: #133020;
+  
+  --transition-speed: 0.3s;
+  --transition-ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Manrope', sans-serif;
+  background-color: var(--paper);
+  color: var(--dark-serpent);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Navigation Styles */
+nav {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+}
+
+nav .nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+nav .logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--castleton-green);
+}
+
+nav ul {
+  display: flex;
+  list-style: none;
+  gap: 2rem;
+}
+
+nav a {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--dark-serpent);
+  position: relative;
+  text-decoration: none;
+}
+
+nav a::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--saffron);
+  transition: width 0.3s ease;
+}
+
+nav a:hover::after {
+  width: 100%;
+}
+
+/* Utility Classes */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.section {
+  padding: 5rem 2rem;
+  margin-top: 80px;
+}
+
+.section-title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--dark-serpent);
+  margin-bottom: 2rem;
+  line-height: 1.2;
+}
+
+.section-subtitle {
+  font-size: 1.25rem;
+  color: var(--castleton-green);
+  margin-bottom: 3rem;
+  font-weight: 300;
+}
+
+/* Button Styles */
+.btn {
+  padding: 12px 28px;
+  border-radius: 40px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Manrope', sans-serif;
+}
+
+.btn-primary {
+  background-color: var(--sea-salt);
+  color: var(--dark-serpent);
+}
+
+.btn-primary:hover {
+  background-color: var(--saffron);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(255, 179, 71, 0.3);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--castleton-green);
+  border: 2px solid var(--castleton-green);
+}
+
+.btn-secondary:hover {
+  background-color: var(--castleton-green);
+  color: var(--paper);
+}
+
+/* Card Styles */
+.card {
+  background: var(--white);
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive Typography */
+@media (max-width: 768px) {
+  .section-title {
+    font-size: 2rem;
+  }
+  
+  .section-subtitle {
+    font-size: 1rem;
+  }
+  
+  .section {
+    padding: 3rem 1rem;
+  }
+  
+  nav ul {
+    gap: 1rem;
+  }
+  
+  nav a {
+    font-size: 0.85rem;
+  }
+}

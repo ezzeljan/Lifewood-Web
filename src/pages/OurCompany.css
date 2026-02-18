@@ -1,0 +1,227 @@
+/* Our Company Page Styles */
+.our-company {
+  background: linear-gradient(180deg, #ffffff 0%, #F9F7F7 100%);
+  width: 100%;
+}
+
+.company-section {
+  padding: 5rem 2rem;
+  margin-top: 70px;
+}
+
+.company-section .section-title {
+  font-size: 3rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  color: #133020;
+  opacity: 1;
+  visibility: visible;
+}
+
+.company-section .section-subtitle {
+  text-align: center;
+  margin-bottom: 4rem;
+  font-size: 1.25rem;
+  opacity: 1;
+  visibility: visible;
+}
+
+/* About Section */
+.about-section {
+  margin-bottom: 6rem;
+}
+
+.about-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: start;
+}
+
+.about-text h2 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #133020;
+  margin-bottom: 2rem;
+  opacity: 1;
+  visibility: visible;
+}
+
+.about-text p {
+  font-size: 1.05rem;
+  color: #555;
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Stats Grid */
+.about-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.stat-item {
+  background: #F9F7F7;
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(4, 98, 65, 0.1);
+  transition: all 0.3s ease;
+  opacity: 1;
+  visibility: visible;
+}
+
+.stat-item:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+  border-color: #FFC370;
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #046241;
+  margin-bottom: 0.5rem;
+  line-height: 1;
+  opacity: 1;
+  visibility: visible;
+}
+
+.stat-label {
+  font-size: 0.95rem;
+  color: #666;
+  font-weight: 500;
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Offices Section */
+.offices-section {
+  margin-top: 6rem;
+}
+
+.offices-section h2 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #133020;
+  margin-bottom: 3rem;
+  text-align: center;
+  opacity: 1;
+  visibility: visible;
+}
+
+.offices-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2.5rem;
+}
+
+.office-card {
+  background: #F9F7F7;
+  padding: 2.5rem;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(4, 98, 65, 0.1);
+  transition: all 0.3s ease;
+  text-align: center;
+  opacity: 1;
+  visibility: visible;
+}
+
+.office-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  border-color: #FFC370;
+}
+
+.office-icon {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+  opacity: 1;
+  visibility: visible;
+}
+
+.office-card h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #133020;
+  margin-bottom: 0.5rem;
+  opacity: 1;
+  visibility: visible;
+}
+
+.office-country {
+  font-size: 0.95rem;
+  color: #046241;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  opacity: 1;
+  visibility: visible;
+}
+
+.office-address {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+  opacity: 1;
+  visibility: visible;
+}
+
+.office-phone a {
+  color: #FFB347;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.office-phone a:hover {
+  color: #FFC370;
+}
+
+/* Responsive Design */
+@media (max-width: 968px) {
+  .about-content {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .about-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .company-section {
+    padding: 3rem 1rem;
+  }
+
+  .company-section .section-title {
+    font-size: 2rem;
+  }
+
+  .about-text h2 {
+    font-size: 1.5rem;
+  }
+
+  .offices-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-item,
+  .office-card {
+    padding: 1.5rem;
+  }
+
+  .stat-number {
+    font-size: 2rem;
+  }
+
+  .about-stats {
+    grid-template-columns: 1fr;
+  }
+}

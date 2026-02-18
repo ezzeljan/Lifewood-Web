@@ -1,0 +1,293 @@
+/* Careers Page Styles */
+.careers {
+  background: linear-gradient(180deg, #ffffff 0%, #F9F7F7 100%);
+  width: 100%;
+}
+
+.careers-section {
+  padding: 5rem 2rem;
+  margin-top: 70px;
+}
+
+.careers-section .section-title {
+  font-size: 3rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  color: #133020;
+  opacity: 1;
+  visibility: visible;
+}
+
+.careers-section .section-subtitle {
+  text-align: center;
+  margin-bottom: 4rem;
+  font-size: 1.25rem;
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Jobs Section */
+.jobs-section {
+  margin-bottom: 6rem;
+}
+
+.jobs-section h2,
+.benefits-section h2 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #133020;
+  margin-bottom: 3rem;
+  text-align: center;
+  opacity: 1;
+  visibility: visible;
+}
+
+.jobs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2.5rem;
+}
+
+.job-card {
+  background: #F9F7F7;
+  border-radius: 15px;
+  padding: 2.5rem;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(4, 98, 65, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  opacity: 1;
+  visibility: visible;
+}
+
+.job-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #FFB347, #FFC370);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.job-card:hover::before {
+  transform: scaleX(1);
+}
+
+.job-card:hover {
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+  border-color: #FFC370;
+}
+
+.job-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.job-header h3 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #133020;
+  flex: 1;
+  opacity: 1;
+  visibility: visible;
+}
+
+.job-type {
+  background: rgba(4, 98, 65, 0.1);
+  color: #046241;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 1;
+  visibility: visible;
+}
+
+.job-department {
+  font-size: 0.95rem;
+  color: #FFB347;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  opacity: 1;
+  visibility: visible;
+}
+
+.job-description {
+  font-size: 0.95rem;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  opacity: 1;
+  visibility: visible;
+}
+
+.job-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  opacity: 1;
+  visibility: visible;
+}
+
+.meta-item {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 500;
+  opacity: 1;
+  visibility: visible;
+}
+
+.job-card .btn {
+  width: 100%;
+  text-align: center;
+}
+
+/* Benefits Section */
+.benefits-section {
+  margin-bottom: 6rem;
+}
+
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 2rem;
+}
+
+.benefit-card {
+  background: #F9F7F7;
+  padding: 2rem;
+  border-radius: 15px;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(4, 98, 65, 0.1);
+  transition: all 0.3s ease;
+  opacity: 1;
+  visibility: visible;
+}
+
+.benefit-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+  border-color: #FFC370;
+}
+
+.benefit-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: inline-block;
+  opacity: 1;
+  visibility: visible;
+}
+
+.benefit-card h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #133020;
+  margin-bottom: 0.75rem;
+  opacity: 1;
+  visibility: visible;
+}
+
+.benefit-card p {
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.5;
+  opacity: 1;
+  visibility: visible;
+}
+
+/* CTA Section */
+.careers-cta {
+  text-align: center;
+  padding: 3rem;
+  background: linear-gradient(135deg, rgba(4, 98, 65, 0.05) 0%, rgba(255, 179, 71, 0.05) 100%);
+  border-radius: 15px;
+  border: 2px dashed rgba(4, 98, 65, 0.2);
+  opacity: 1;
+  visibility: visible;
+}
+
+.careers-cta h2 {
+  font-size: 2rem;
+  color: #133020;
+  margin-bottom: 0.5rem;
+  opacity: 1;
+  visibility: visible;
+}
+
+.careers-cta p {
+  font-size: 1.05rem;
+  color: #666;
+  margin-bottom: 2rem;
+  opacity: 1;
+  visibility: visible;
+}
+
+.careers-cta .btn {
+  display: inline-block;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .careers-section {
+    padding: 3rem 1rem;
+  }
+
+  .careers-section .section-title {
+    font-size: 2rem;
+  }
+
+  .jobs-section h2,
+  .benefits-section h2 {
+    font-size: 1.5rem;
+  }
+
+  .jobs-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .benefits-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .job-card,
+  .benefit-card {
+    padding: 1.5rem;
+  }
+
+  .careers-cta {
+    padding: 2rem;
+  }
+
+  .careers-cta h2 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .benefits-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .job-header {
+    flex-direction: column;
+  }
+
+  .job-type {
+    align-self: flex-start;
+  }
+}
