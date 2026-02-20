@@ -13,7 +13,7 @@ export default function ServicesSection() {
         {
             id: 1,
             title: "Audio",
-            description: "Pixel-perfect labeling for computer vision, NLP, and audio models. We ensure every data point is accurately tagged to boost your model's performance.",
+            description: "Collection, labelling, voice categorization, music categorization, intelligent cs.",
             icon: <Mic className="w-6 h-6 sm:w-8 sm:h-8" />,
             gradient: "from-[#046241] to-[#022c1d]",
             image: "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&q=80&w=800" // Placeholder
@@ -21,7 +21,7 @@ export default function ServicesSection() {
         {
             id: 2,
             title: "Video",
-            description: "End-to-end model development, from data preprocessing to fine-tuning and deployment. Custom solutions tailored to your specific industry needs.",
+            description: "Collection, labelling, audit, live broadcast, subtitle generation",
             icon: <Video className="w-6 h-6 sm:w-8 sm:h-8" />,
             gradient: "from-[#FFB347] to-[#FFC370]",
             image: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&q=80&w=800" // Placeholder
@@ -29,7 +29,7 @@ export default function ServicesSection() {
         {
             id: 3,
             title: "Image",
-            description: "Ethically sourced, diverse datasets from over 50 countries. We handle consent, compliance, and curation so you can focus on innovation.",
+            description: "Collection, labelling, classification, audit, object detection and tagging",
             icon: <Image className="w-6 h-6 sm:w-8 sm:h-8" />,
             gradient: "from-[#046241] to-[#022c1d]",
             image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=800" // Placeholder
@@ -37,7 +37,7 @@ export default function ServicesSection() {
         {
             id: 4,
             title: "Text",
-            description: "Robust content moderation and safety protocols. Protect your users and brand reputation with our human-in-the-loop safety services.",
+            description: "Text, collection, labelling, transcriptions, utterance collection, sentiment analysis",
             icon: <FileText className="w-6 h-6 sm:w-8 sm:h-8" />,
             gradient: "from-[#FFC370] to-[#FFB347]",
             image: "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&q=80&w=800" // Placeholder
@@ -66,9 +66,9 @@ export default function ServicesSection() {
     return (
         <section ref={sectionRef} className="w-full bg-[#f8f9fa] py-20">
             <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="mb-12 text-center">
-                    <h2 className="text-4xl font-bold text-[#133020] mb-4">AI Data Services</h2>
-                    <p className="text-[#046241] text-lg max-w-2xl mx-auto">
+                <div className="mb-12">
+                    <h1 className="text-6xl font-bold text-[#133020] mb-4">AI Data Services</h1>
+                    <p className="text-[#046241] text-lg">
                         Lifewood offers AI and IT services that enhance decision-making, reduce costs, and improve productivity to optimize organizational performance.
                     </p>
                 </div>
@@ -109,8 +109,8 @@ export default function ServicesSection() {
                                         <p className="text-white/90 text-lg max-w-2xl mb-6">
                                             {service.description}
                                         </p>
-                                        <a href="#" className="inline-flex items-center text-white font-semibold hover:underline">
-                                            Explore Service <ArrowRight className="ml-2 w-5 h-5" />
+                                        <a href="/ai-services" className="inline-flex items-center text-white font-semibold hover:underline">
+                                            Learn more <ArrowRight className="ml-2 w-5 h-5" />
                                         </a>
                                     </div>
                                 </div>

@@ -75,7 +75,7 @@ export default function Philanthropy() {
       progressBarsRef.current.forEach((bar, index) => {
         if (!bar) return;
         const percentage = parseInt(bar.getAttribute('data-percentage'));
-        
+
         gsap.fromTo(bar.querySelector('.progress-fill'),
           { width: '0%' },
           {
@@ -101,7 +101,7 @@ export default function Philanthropy() {
           duration: 1.5,
           ease: 'power3.out',
           delay: index * 0.1,
-          onUpdate: function() {
+          onUpdate: function () {
             percentageText.textContent = Math.round(this.targets()[0].value) + '%';
           }
         });
@@ -147,42 +147,22 @@ export default function Philanthropy() {
     { icon: '💧', value: '100M', label: 'Liters Water Saved' }
   ];
 
-  const sustainabilityProgress = [
-    { label: 'Climate Action', percentage: 85 },
-    { label: 'Renewable Energy', percentage: 72 },
-    { label: 'Waste Reduction', percentage: 90 },
-    { label: 'Community Development', percentage: 78 }
-  ];
-
   const initiatives = [
-    {
-      title: 'Global Climate Initiative',
-      description: 'Partnering with organizations worldwide to combat climate change through AI-powered climate prediction and mitigation strategies.',
-      focus: ['Emissions Tracking', 'Climate Modeling', 'Sustainability Planning']
-    },
-    {
-      title: 'Education for All',
-      description: 'Providing free AI and technology training to underserved communities, empowering individuals with future-ready skills.',
-      focus: ['STEM Education', 'Scholarships', 'Mentorship Programs']
-    },
-    {
-      title: 'Health & Wellness',
-      description: 'Leveraging AI to improve healthcare access and outcomes, particularly in developing regions with limited resources.',
-      focus: ['Diagnostic AI', 'Telemedicine', 'Preventive Care']
-    },
-    {
-      title: 'Social Equity Programs',
-      description: 'Working to bridge the digital divide and ensure equitable access to technology and opportunities for all communities.',
-      focus: ['Digital Inclusion', 'Job Training', 'Economic Empowerment']
-    }
-  ];
+    { title: 'Impact', id: 0 },
+    { title: 'Partnership', id: 1 },
+    { title: 'Application', id: 2 },
+    { title: 'Expanding', id: 3 }
+  ]; // Placeholder for animation refs if needed, but currently hardcoded in JSX
+
 
   return (
     <main className="philanthropy">
       <section className="philanthropy-section">
         <div className="container">
-          <h1 ref={titleRef} className="section-title">Philanthropy & Impact</h1>
-          <p className="section-subtitle">Creating lasting positive change through technology and innovation</p>
+          <h1 ref={titleRef} className="section-title">Transforming Communities Worldwide</h1>
+          <p className="section-subtitle max-w-4xl mx-auto text-lg leading-relaxed">
+            Our vision is of a world where financial investment plays a central role in solving the social and environmental challenges facing the global community, specifically in Africa and the Indian sub-continent.
+          </p>
 
           {/* Impact Metrics */}
           <section className="impact-metrics">
@@ -201,48 +181,67 @@ export default function Philanthropy() {
             </div>
           </section>
 
-          {/* Sustainability Progress */}
-          <section className="sustainability-section">
-            <h2>Our Sustainability Goals</h2>
-            <div className="progress-container">
-              {sustainabilityProgress.map((goal, index) => (
-                <div
-                  key={index}
-                  ref={(el) => (progressBarsRef.current[index] = el)}
-                  className="progress-item"
-                  data-percentage={goal.percentage}
-                >
-                  <div className="progress-header">
-                    <span className="progress-label">{goal.label}</span>
-                    <span className="percentage-text">0%</span>
-                  </div>
-                  <div className="progress-bar">
-                    <div className="progress-fill" style={{ width: 0 }}></div>
-                  </div>
+
+
+          {/* Core Focus Section */}
+          <section className="initiatives-section py-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 initiatives-grid">
+              {/* Impact Card */}
+              <div ref={(el) => (initiativesRef.current[0] = el)} className="initiative-card group">
+                <h3 className="text-2xl font-bold mb-4 text-[#046241]">Impact</h3>
+                <p className="text-gray-700 leading-relaxed font-light">
+                  Through purposeful partnerships and sustainable investment, we empower communities across Africa and the Indian sub-continent to create lasting economic and social transformation.
+                </p>
+              </div>
+
+              {/* Partnership Card */}
+              <div ref={(el) => (initiativesRef.current[1] = el)} className="initiative-card group col-span-1 md:col-span-2 bg-[#F9F7F7]">
+                <h3 className="text-2xl font-bold mb-4 text-[#046241]">Partnership</h3>
+                <p className="text-gray-700 leading-relaxed font-light mb-4 text-base">
+                  In partnership with our philanthropic partners, Lifewood has expanded operations across:
+                </p>
+                <div className="flex flex-wrap gap-2 focus-tag-container">
+                  {[
+                    "South Africa", "Nigeria", "Republic of the Congo", "Democratic Republic of the Congo",
+                    "Ghana", "Madagascar", "Benin", "Uganda", "Kenya", "Ivory Coast", "Egypt",
+                    "Ethiopia", "Niger", "Tanzania", "Namibia", "Zambia", "Zimbabwe", "Liberia",
+                    "Sierra Leone", "Bangladesh"
+                  ].map((country, idx) => (
+                    <span key={idx} className="focus-tag px-3 py-1 bg-white border border-[#046241]/20 rounded-full text-sm text-[#133020]">
+                      {country}
+                    </span>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              {/* Application Card */}
+              <div ref={(el) => (initiativesRef.current[2] = el)} className="initiative-card group">
+                <h3 className="text-2xl font-bold mb-4 text-[#046241]">Application</h3>
+                <p className="text-gray-700 leading-relaxed font-light">
+                  This requires the application of our methods and experience for the development of people in under resourced economies.
+                </p>
+              </div>
+
+              {/* Expanding Card */}
+              <div ref={(el) => (initiativesRef.current[3] = el)} className="initiative-card group">
+                <h3 className="text-2xl font-bold mb-4 text-[#046241]">Expanding</h3>
+                <p className="text-gray-700 leading-relaxed font-light">
+                  We are expanding access to training, establishing equiatable wage structures and career and leadership progression to create sustainable change, by equipping individuals to take the lead and grow the business for themselves for the long term benefit of everyone.
+                </p>
+              </div>
             </div>
           </section>
 
-          {/* Initiatives */}
-          <section className="initiatives-section">
-            <h2>Our Initiatives</h2>
-            <div className="initiatives-grid">
-              {initiatives.map((initiative, index) => (
-                <div
-                  key={index}
-                  ref={(el) => (initiativesRef.current[index] = el)}
-                  className="initiative-card"
-                >
-                  <h3>{initiative.title}</h3>
-                  <p>{initiative.description}</p>
-                  <div className="initiative-focus">
-                    {initiative.focus.map((item, idx) => (
-                      <span key={idx} className="focus-tag">{item}</span>
-                    ))}
-                  </div>
-                </div>
-              ))}
+          {/* Impact Map */}
+          <section className="impact-map-section mt-16 pt-12 border-t border-gray-100">
+            <h2 className="text-4xl font-bold mb-10 text-center text-[#046241]">Our Impact in Africa</h2>
+            <div className="w-full h-[700px] rounded-[32px] overflow-hidden shadow-2xl">
+              <iframe
+                src="https://lifewoodafricamap.vercel.app/"
+                title="Lifewood Africa Impact Map"
+                className="w-full h-full border-none"
+                allowFullScreen
+              ></iframe>
             </div>
           </section>
         </div>

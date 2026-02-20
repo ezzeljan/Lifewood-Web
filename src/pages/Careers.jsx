@@ -1,125 +1,136 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { Swiper, SwiperSlide, useSwiperSlide } from 'swiper/react';
+import { EffectCoverflow, Pagination, Navigation } from 'swiper/modules';
+
+// Import Swiper styles
+import 'swiper/css';
+import 'swiper/css/effect-coverflow';
+import 'swiper/css/pagination';
+import 'swiper/css/navigation';
+
 import './Careers.css';
 
 gsap.registerPlugin(ScrollTrigger);
 
-export default function Careers() {
-  const titleRef = useRef(null);
-  const jobCardsRef = useRef([]);
-  const benefitsRef = useRef([]);
+const JobCard = ({ job, image, index }) => {
+  const swiperSlide = useSwiperSlide();
+  const [isFlipped, setIsFlipped] = useState(false);
 
   useEffect(() => {
-    try {
-      // Ensure all elements are visible
-      if (titleRef.current) {
-        titleRef.current.style.opacity = '1';
-        titleRef.current.style.visibility = 'visible';
+    setIsFlipped(swiperSlide.isActive);
+  }, [swiperSlide.isActive]);
+
+  const brandColors = ['#FFB347', '#133020', '#046241', '#FFC370'];
+  const backBackgroundColor = brandColors[index % brandColors.length];
+
+  // Adjust text color based on background
+  // Dark backgrounds (#133020, #046241) -> White text
+  // Light backgrounds (#FFB347, #FFC370) -> Black text
+  const isDarkBackground = ['#133020', '#046241'].includes(backBackgroundColor);
+  const textColor = isDarkBackground ? 'white' : '#1a1a1a';
+  const metaColor = isDarkBackground ? '#ccc' : '#333';
+  const buttonBg = isDarkBackground ? '#4ade80' : '#133020';
+  const buttonText = isDarkBackground ? '#1a1a1a' : 'white';
+  const buttonHover = isDarkBackground ? '#22c55e' : '#1a402b';
+
+  return (
+    <div
+      className={`flip-card ${isFlipped ? 'flipped' : ''}`}
+      onClick={() => {
+        if (swiperSlide.isActive) {
+          setIsFlipped(!isFlipped);
+        }
+      }}
+      title={swiperSlide.isActive ? (isFlipped ? "Click to see image" : "Click to see details") : ""}
+    >
+      <div className="flip-card-inner">
+        {/* Front Side */}
+        <div className="flip-card-front">
+          <img src={image} alt={job.title} loading="lazy" />
+          <div className="card-front-title">{job.title}</div>
+        </div>
+
+        {/* Back Side */}
+        <div
+          className="flip-card-back"
+          style={{
+            background: backBackgroundColor,
+            color: textColor
+          }}
+        >
+          <div>
+            <h3 style={{ color: textColor }}>{job.title}</h3>
+            <span className="job-type" style={{ color: isDarkBackground ? '#ccc' : '#333', borderColor: isDarkBackground ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)' }}>{job.type}</span>
+            <p className="job-department" style={{ color: isDarkBackground ? '#4ade80' : '#046241' }}>{job.department}</p>
+            <p className="job-description" style={{ color: textColor }}>{job.description}</p>
+          </div>
+          <div>
+
+            <button
+              className="btn btn-primary"
+              style={{
+                backgroundColor: buttonBg,
+                color: buttonText,
+              }}
+              onMouseOver={(e) => e.target.style.backgroundColor = buttonHover}
+              onMouseOut={(e) => e.target.style.backgroundColor = buttonBg}
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent flip when clicking button
+                alert(`Applying for ${job.title}`);
+              }}
+            >
+              Apply Now
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default function Careers() {
+  const [introComplete, setIntroComplete] = useState(false);
+  const introRef = useRef(null);
+  const mainContentRef = useRef(null);
+
+  useEffect(() => {
+    // Initial Animation Sequence
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({
+        onComplete: () => setIntroComplete(true)
+      });
+
+      // Validating refs exist
+      if (introRef.current && mainContentRef.current) {
+        tl.to(introRef.current, {
+          scale: 0.8,
+          opacity: 0,
+          duration: 1.5,
+          ease: "power4.inOut",
+          delay: 0.5
+        })
+          .fromTo(mainContentRef.current,
+            { scale: 1.2, opacity: 0 },
+            { scale: 1, opacity: 1, duration: 1.2, ease: "power4.out" },
+            "<0.2" // Overlap animations
+          );
       }
-      jobCardsRef.current.forEach((card) => {
-        if (card) {
-          card.style.opacity = '1';
-          card.style.visibility = 'visible';
-        }
-      });
-      benefitsRef.current.forEach((benefit) => {
-        if (benefit) {
-          benefit.style.opacity = '1';
-          benefit.style.visibility = 'visible';
-        }
-      });
+    });
 
-      // Animate title
-      gsap.fromTo(titleRef.current,
-        { opacity: 0, y: 50 },
-        {
-          scrollTrigger: {
-            trigger: titleRef.current,
-            start: 'top 80%',
-          },
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          ease: 'power3.out'
-        }
-      );
-
-      // Animate job cards with flip effect
-      jobCardsRef.current.forEach((card, index) => {
-        if (!card) return;
-        gsap.fromTo(card,
-          { opacity: 0, rotationY: 90 },
-          {
-            scrollTrigger: {
-              trigger: card,
-              start: 'top 85%',
-            },
-            opacity: 1,
-            rotationY: 0,
-            duration: 0.8,
-            ease: 'back.out(1.7)',
-            delay: index * 0.15
-          }
-        );
-
-        // Add hover animation
-        card.addEventListener('mouseenter', () => {
-          gsap.to(card, {
-            y: -10,
-            duration: 0.3,
-            ease: 'power2.out'
-          });
-        });
-
-        card.addEventListener('mouseleave', () => {
-          gsap.to(card, {
-            y: 0,
-            duration: 0.3,
-            ease: 'power2.out'
-          });
-        });
-      });
-
-      // Animate benefits
-      benefitsRef.current.forEach((benefit, index) => {
-        if (!benefit) return;
-        gsap.fromTo(benefit,
-          { opacity: 0, x: index % 2 === 0 ? -50 : 50 },
-          {
-            scrollTrigger: {
-              trigger: benefit,
-              start: 'top 85%',
-            },
-            opacity: 1,
-            x: 0,
-            duration: 0.8,
-            ease: 'power3.out',
-            delay: index * 0.1
-          }
-        );
-      });
-    } catch (error) {
-      console.warn('Animation setup error:', error);
-      // Ensure fallback visibility
-      if (titleRef.current) titleRef.current.style.opacity = '1';
-      jobCardsRef.current.forEach((card) => {
-        if (card) card.style.opacity = '1';
-      });
-      benefitsRef.current.forEach((benefit) => {
-        if (benefit) benefit.style.opacity = '1';
-      });
-    }
+    return () => ctx.revert();
   }, []);
 
-  const jobs = [
+  const baseJobs = [
     {
       title: 'Senior AI Engineer',
       department: 'Engineering',
       location: 'San Francisco, USA',
       type: 'Full-time',
       experience: '5+ years',
-      description: 'Lead the development of cutting-edge AI models and solutions.'
+      description: 'Lead the development of cutting-edge AI models and solutions.',
+      image: 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&q=80&w=600'
     },
     {
       title: 'Data Scientist',
@@ -127,7 +138,8 @@ export default function Careers() {
       location: 'London, UK',
       type: 'Full-time',
       experience: '3+ years',
-      description: 'Develop advanced machine learning models for real-world applications.'
+      description: 'Develop advanced machine learning models for real-world applications.',
+      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=600'
     },
     {
       title: 'Product Manager',
@@ -135,7 +147,8 @@ export default function Careers() {
       location: 'Singapore',
       type: 'Full-time',
       experience: '4+ years',
-      description: 'Shape the future of our AI product offerings.'
+      description: 'Shape the future of our AI product offerings.',
+      image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=600'
     },
     {
       title: 'DevOps Engineer',
@@ -143,7 +156,8 @@ export default function Careers() {
       location: 'Berlin, Germany',
       type: 'Full-time',
       experience: '3+ years',
-      description: 'Build robust infrastructure for our global operations.'
+      description: 'Build robust infrastructure for our global operations.',
+      image: 'https://images.unsplash.com/photo-1667372393119-c81c0cda0a63?auto=format&fit=crop&q=80&w=600'
     },
     {
       title: 'UX/UI Designer',
@@ -151,7 +165,8 @@ export default function Careers() {
       location: 'Remote',
       type: 'Full-time',
       experience: '2+ years',
-      description: 'Create intuitive interfaces for complex AI applications.'
+      description: 'Create intuitive interfaces for complex AI applications.',
+      image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80&w=600'
     },
     {
       title: 'Business Development',
@@ -159,71 +174,83 @@ export default function Careers() {
       location: 'Multiple',
       type: 'Full-time',
       experience: '5+ years',
-      description: 'Drive growth through strategic partnerships.'
+      description: 'Drive growth through strategic partnerships.',
+      image: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=600'
     }
   ];
 
-  const benefits = [
-    { icon: '💰', title: 'Competitive Salary', description: 'Industry-leading compensation packages' },
-    { icon: '🏥', title: 'Health Insurance', description: 'Comprehensive coverage for you and family' },
-    { icon: '🌍', title: 'Remote Work', description: 'Flexible work location options' },
-    { icon: '📚', title: 'Learning Budget', description: '$2000 annual professional development' },
-    { icon: '🏖️', title: 'Unlimited PTO', description: 'Work-life balance is important' },
-    { icon: '🚀', title: 'Career Growth', description: 'Clear progression opportunities' },
-    { icon: '🍽️', title: 'Wellness Programs', description: 'Gym membership and healthy snacks' },
-    { icon: '🎉', title: 'Team Events', description: 'Regular team building activities' }
+  // duplicate to get 19 items
+  const jobs = [];
+  const titles = [
+    'Machine Learning Engineer', 'Frontend Developer', 'Backend Developer', 'Full Stack Engineer',
+    'Marketing Specialist', 'HR Manager', 'Finance Analyst', 'Legal Counsel', 'Customer Success Manager',
+    'Technical Writer', 'QA Engineer', 'Security Specialist', 'Cloud Architect'
   ];
 
+  // Fill up to 19
+  for (let i = 0; i < 19; i++) {
+    const base = baseJobs[i % baseJobs.length];
+    const jobTitle = titles[i % titles.length] || base.title;
+
+    jobs.push({
+      ...base,
+      title: jobTitle, // Rotate titles for variety
+      id: i
+    });
+  }
+
+  // The initial active slide index
+  const initialSlideIndex = 9;
+  const initialImage = jobs[initialSlideIndex]?.image;
+
   return (
-    <main className="careers">
-      <section className="careers-section">
+    <main className="careers relative overflow-hidden">
+      {/* Intro Overlay */}
+      {!introComplete && (
+        <div
+          ref={introRef}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-white pointer-events-none"
+        >
+          <img
+            src={initialImage}
+            alt="Intro"
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+
+      <section className="careers-section" ref={mainContentRef} style={{ opacity: 0 }}>
         <div className="container">
-          <h1 ref={titleRef} className="section-title">Join Our Team</h1>
-          <p className="section-subtitle">Build the future with us at Lifewood</p>
-
-          {/* Open Positions */}
+          {/* Open Positions Carousel */}
           <section className="jobs-section">
-            <h2>Open Positions</h2>
-            <div className="jobs-grid">
+            <Swiper
+              effect={'coverflow'}
+              grabCursor={true}
+              centeredSlides={true}
+              slidesPerView={'auto'}
+              initialSlide={initialSlideIndex}
+              coverflowEffect={{
+                rotate: 50,
+                stretch: 0,
+                depth: 100,
+                modifier: 1,
+                slideShadows: true,
+              }}
+              pagination={{ clickable: true }}
+              modules={[EffectCoverflow, Pagination, Navigation]}
+              className="mySwiper"
+              style={{ paddingBottom: '3rem' }}
+            >
               {jobs.map((job, index) => (
-                <div
-                  key={index}
-                  ref={(el) => (jobCardsRef.current[index] = el)}
-                  className="job-card"
-                  style={{ perspective: '1000px' }}
-                >
-                  <div className="job-header">
-                    <h3>{job.title}</h3>
-                    <span className="job-type">{job.type}</span>
-                  </div>
-                  <p className="job-department">{job.department}</p>
-                  <p className="job-description">{job.description}</p>
-                  <div className="job-meta">
-                    <span className="meta-item">📍 {job.location}</span>
-                    <span className="meta-item">💼 {job.experience}</span>
-                  </div>
-                  <button className="btn btn-primary">Apply Now</button>
-                </div>
+                <SwiperSlide key={index}>
+                  <JobCard job={job} image={job.image} index={index} />
+                </SwiperSlide>
               ))}
-            </div>
-          </section>
+            </Swiper>
 
-          {/* Benefits Section */}
-          <section className="benefits-section">
-            <h2>Why Join Lifewood?</h2>
-            <div className="benefits-grid">
-              {benefits.map((benefit, index) => (
-                <div
-                  key={index}
-                  ref={(el) => (benefitsRef.current[index] = el)}
-                  className="benefit-card"
-                >
-                  <div className="benefit-icon">{benefit.icon}</div>
-                  <h3>{benefit.title}</h3>
-                  <p>{benefit.description}</p>
-                </div>
-              ))}
-            </div>
+            <p style={{ textAlign: 'center', marginTop: '1rem', color: '#666', fontSize: '0.9rem' }}>
+              Swipe to explore
+            </p>
           </section>
 
           {/* CTA Section */}

@@ -20,6 +20,10 @@ export default function Hero() {
   // Clients Section Refs
   const clientsRef = useRef(null);
 
+  // Video Section Refs
+  const videoSectionRef = useRef(null);
+  const videoWrapperRef = useRef(null);
+
   useEffect(() => {
     // --- Hero Initial Animation ---
     const tl = gsap.timeline();
@@ -49,7 +53,7 @@ export default function Hero() {
 
     if (aboutRef.current && aboutTextRef.current) {
       // Split text animation (Scroll Reveal Style)
-      const words = aboutRef.current.querySelectorAll('.about-word');
+      const words = aboutRef.current.querySelectorAll('.about-char');
 
       gsap.fromTo(words,
         { opacity: 0, y: 20 },
@@ -57,7 +61,7 @@ export default function Hero() {
           opacity: 1,
           y: 0,
           duration: 0.8,
-          stagger: 0.02,
+          stagger: 0.01,
           ease: 'power2.out',
           scrollTrigger: {
             trigger: aboutRef.current,
@@ -103,6 +107,31 @@ export default function Hero() {
         }
       });
     });
+
+
+
+    // --- Video Expansion Animation ---
+    if (videoSectionRef.current && videoWrapperRef.current) {
+      gsap.fromTo(videoWrapperRef.current,
+        {
+          width: '60%',
+          height: '60vh',
+          borderRadius: '32px'
+        },
+        {
+          width: '100vw',
+          height: '100vh',
+          borderRadius: '0px',
+          ease: 'none',
+          scrollTrigger: {
+            trigger: videoSectionRef.current,
+            start: 'top bottom',
+            end: 'center center',
+            scrub: true,
+          }
+        }
+      );
+    }
 
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
@@ -150,9 +179,13 @@ export default function Hero() {
         <div className="about-container relative z-10 text-center">
           <h2 className="text-3xl font-bold text-[#FFB347] mb-6">About Us</h2>
           <p ref={aboutTextRef} className="about-text text-xl leading-relaxed max-w-3xl mx-auto">
-            {"We empower our company and our clients to realize the transformative power of AI.".split(" ").map((word, index) => (
-              <span key={index} className="about-word inline-block mr-2 opacity-0">
-                {word}
+            {"We empower our company and our clients to realize the transformative power of AI.".split(" ").map((word, wIndex) => (
+              <span key={wIndex} className="about-word inline-block mr-2">
+                {word.split("").map((char, cIndex) => (
+                  <span key={cIndex} className="about-char inline-block opacity-0">
+                    {char}
+                  </span>
+                ))}
               </span>
             ))}
           </p>
@@ -182,6 +215,26 @@ export default function Hero() {
             <span className="stat-symbol">+</span>
             <p className="stat-label">Global Online Resources</p>
           </div>
+        </div>
+      </section>
+
+      {/* Video Embed Section (Scroll Expand) */}
+      <section ref={videoSectionRef} className="video-section relative w-full h-[120vh] flex items-start justify-center overflow-hidden bg-transparent">
+        <div
+          ref={videoWrapperRef}
+          className="video-wrapper relative overflow-hidden shadow-2xl z-20 origin-center"
+          style={{ width: '60%', height: '60vh', borderRadius: '32px' }} // Initial state matches GSAP from
+        >
+          <iframe
+            className="w-full h-full object-cover"
+            src="https://www.youtube.com/embed/Cdn9Q_Qo40E?si=-m6VxhP2JBcEO9Yc&autoplay=1&mute=1&loop=1&playlist=Cdn9Q_Qo40E&controls=0&showinfo=0&rel=0"
+            title="Lifewood AI"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          ></iframe>
+          {/* Overlay to prevent scroll stealing (optional) */}
+          <div className="absolute inset-0 pointer-events-none"></div>
         </div>
       </section>
 

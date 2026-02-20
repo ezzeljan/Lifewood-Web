@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import BrandValuesSection from '../components/BrandValuesSection';
 import './AiInitiatives.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -78,65 +79,21 @@ export default function AiServices() {
     }
   }, []);
 
-  const services = [
-    {
-      title: 'Machine Learning Models',
-      description: 'Custom ML solutions tailored to solve complex business challenges with predictive analytics and pattern recognition.',
-      icon: '🤖'
-    },
-    {
-      title: 'Natural Language Processing',
-      description: 'Advanced text analysis and understanding capabilities for intelligent document processing and communication.',
-      icon: '💬'
-    },
-    {
-      title: 'Computer Vision',
-      description: 'Image and video analysis powered by deep learning for automated visual understanding and classification.',
-      icon: '👁️'
-    },
-    {
-      title: 'Data Analytics',
-      description: 'Transforming raw data into actionable insights with comprehensive analytics and business intelligence tools.',
-      icon: '📊'
-    },
-    {
-      title: 'AI Strategy Consulting',
-      description: 'Expert guidance on implementing AI across your organization with best practices and strategic roadmaps.',
-      icon: '🎯'
-    },
-    {
-      title: 'Custom AI Development',
-      description: 'Bespoke AI solutions engineered from the ground up to meet your specific business requirements.',
-      icon: '⚙️'
-    }
-  ];
-
   return (
     <main className="ai-initiatives"> {/* Reusing class for styles */}
-      <section className="ai-section" ref={sectionRef}>
+      <section className="ai-section" ref={sectionRef} style={{ paddingBottom: '0' }}>
         <div className="container">
-          <h1 ref={titleRef} className="section-title">AI Services</h1>
-          <p className="section-subtitle">Data collection, labeling, MLOps and model deployment services.</p>
-
-          <div className="cards-grid" style={{ marginTop: '3rem' }}>
-            {services.map((service, index) => (
-              <div
-                key={index}
-                ref={(el) => (cardsRef.current[index] = el)}
-                className="service-card"
-                style={{ perspective: '1000px' }}
-              >
-                <div className="card-icon">{service.icon}</div>
-                <h3>{service.title}</h3>
-                <p>{service.description}</p>
-                <div className="card-footer">
-                  <button className="card-btn">Learn More →</button>
-                </div>
-              </div>
-            ))}
-          </div>
+          <h1 ref={titleRef} className="section-title">AI Data Services</h1>
+          <p className="section-subtitle" style={{ marginBottom: '2rem' }}>Lifewood delivers end-to-end AI data solutions—from multi-language data collection and annotation to model training and generative AI content. Leveraging our global workforce, industrialized methodology, and proprietary LiFT platform, we enable organizations to scale efficiently, reduce costs, and accelerate decision-making with high-quality, domain-specific datasets.</p>
         </div>
       </section>
+
+      <div className="w-full text-center pb-8 bg-white">
+        <h2 className="text-3xl font-bold text-[#133020]">Why Brands Trust Us</h2>
+      </div>
+
+      {/* Brand Values Section */}
+      <BrandValuesSection />
     </main>
   );
 }
