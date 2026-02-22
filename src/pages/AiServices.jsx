@@ -83,13 +83,23 @@ export default function AiServices() {
     <main className="ai-initiatives"> {/* Reusing class for styles */}
       <section className="ai-section" ref={sectionRef} style={{ paddingBottom: '0' }}>
         <div className="container">
-          <h1 ref={titleRef} className="section-title">AI Data Services</h1>
-          <p className="section-subtitle" style={{ marginBottom: '2rem' }}>Lifewood delivers end-to-end AI data solutions—from multi-language data collection and annotation to model training and generative AI content. Leveraging our global workforce, industrialized methodology, and proprietary LiFT platform, we enable organizations to scale efficiently, reduce costs, and accelerate decision-making with high-quality, domain-specific datasets.</p>
+          <h1 ref={titleRef} className="section-title" style={{ textAlign: 'left' }}>AI Data Services</h1>
+          <p className="section-subtitle" style={{ marginBottom: '2rem', textAlign: 'left', fontSize: '1rem' }}>Lifewood delivers end-to-end AI data solutions—from multi-language data collection and annotation to model training and generative AI content. Leveraging our global workforce, industrialized methodology, and proprietary LiFT platform, we enable organizations to scale efficiently, reduce costs, and accelerate decision-making with high-quality, domain-specific datasets.</p>
         </div>
       </section>
 
-      <div className="w-full text-center pb-8 bg-white">
-        <h2 className="text-3xl font-bold text-[#133020]">Why Brands Trust Us</h2>
+      <div className="w-full text-center pt-16 pb-2 bg-white">
+        <div className="inline-flex items-center justify-center gap-2 text-sm font-bold tracking-wider text-black bg-transparent border border-gray-400 rounded-full px-4 py-1.5 mb-3">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600">
+            <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+            <path d="M5 3v4" />
+            <path d="M19 17v4" />
+            <path d="M3 5h4" />
+            <path d="M17 19h4" />
+          </svg>
+          Why brands trust us
+        </div>
+        <h1 className="text-3xl font-bold text-[#133020]">Comprehensive Data Solutions</h1>
       </div>
 
       {/* Brand Values Section */}

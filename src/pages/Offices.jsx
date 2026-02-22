@@ -20,9 +20,10 @@ const images = [
 export default function Offices() {
   return (
     <main className="page section">
-      <div className="container mx-auto px-4 pt-12 pb-8">
-        <h1 className="section-title text-4xl font-bold text-center mb-4 text-[#046241]">Largest Global Data Collection Resources Distribution</h1>
-        <p className="section-subtitle text-center mb-8 text-[#133020]/70">Our global office locations.</p>
+      <div className="w-full pt-4 pb-8">
+        <h1 className="section-title text-5xl md:text-6xl font-bold text-left mb-4 text-[#046241] px-8 leading-tight">
+          Largest Global Data Collection<br />Resources Distribution
+        </h1>
       </div>
 
       {/* Marquee Section - Full Width */}

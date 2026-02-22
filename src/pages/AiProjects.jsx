@@ -60,7 +60,7 @@ const aiServices = [
     icon: <MessageSquare className="w-6 h-6" />,
     color: 'from-blue-500 to-indigo-900',
     backgroundColor: '#FFB347',
-    textColor: 'text-[#133020]',
+    textColor: 'text-white',
     image: 'url("https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2070&auto=format&fit=crop")'
   },
   {
@@ -118,7 +118,7 @@ const aiServices = [
     icon: <Scroll className="w-6 h-6" />,
     color: 'from-slate-500 to-slate-800',
     backgroundColor: '#FFC370',
-    textColor: 'text-[#133020]',
+    textColor: 'text-white',
     image: 'url("https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop")'
   }
 ];
@@ -163,20 +163,28 @@ export default function AiProjects() {
   return (
     <div className="bg-gradient-to-b from-white to-[#F9F7F7] text-[#133020] py-24 min-h-screen overflow-hidden">
       <div className="container mx-auto px-4 mb-16">
-        <h1
-          ref={titleRef}
-          className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-[#046241]"
-        >
-          Projects
-        </h1>
-        <p className="text-xl text-[#133020]/70 max-w-4xl font-light">
-          What we currently handle
-        </p>
+        <div className="mb-20 text-left">
+          <h1 ref={titleRef} className="text-5xl md:text-6xl font-bold text-[#133020] mb-6">
+            AI Projects
+          </h1>
+          <p className="text-base text-[#133020]/70 font-light leading-relaxed">
+            From building AI datasets in diverse languages and environments, to developing platforms that enhance productivity and open new opportunities in under-resourced economies, you’ll see how Lifewood is shaping the future  with innovation, integrity and a focus on people.
+          </p>
+        </div>
+
+        <div className="flex flex-col items-center text-center">
+          <p className="inline-block text-sm font-bold tracking-wider text-white bg-[#133020] rounded-full px-4 py-1.5 mb-4">
+            Projects
+          </p>
+          <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6 text-[#046241]">
+            What we currently handle
+          </h2>
+        </div>
       </div>
 
       <div
         ref={containerRef}
-        className="flex flex-col md:flex-row h-[900px] w-full px-2 gap-2"
+        className="flex flex-col md:flex-row h-[600px] w-full px-2 gap-2"
       >
         {aiServices.map((service) => {
           const isActive = activeId === service.id;
@@ -187,12 +195,13 @@ export default function AiProjects() {
               onClick={() => setActiveId(service.id)}
               className={`
                 relative h-[200px] md:h-full rounded-[24px] overflow-hidden cursor-pointer
+                border border-[#133020]/20
                 transition-[flex-grow,width,opacity,transform,background-color] duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]
                 ${isActive ? 'flex-[10] md:flex-[4] shadow-2xl scale-[1.01]' : 'flex-[2] md:flex-[0.5]'}
                 group shadow-lg
               `}
               style={{
-                background: isActive ? service.backgroundColor : service.image,
+                background: service.image,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center'
               }}
@@ -202,10 +211,10 @@ export default function AiProjects() {
                 <div className={`absolute inset-0 bg-black/20 transition-colors duration-500 pointer-events-none`} />
               )}
 
-              {/* Active State Gradient Overlay - Removed for solid color, or kept subtle if needed */}
-              {/* <div
-                className={`absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent transition-opacity duration-700 ${isActive ? 'opacity-100' : 'opacity-0'}`}
-              /> */}
+              {/* Active State Gradient Overlay */}
+              <div
+                className={`absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20 transition-opacity duration-700 ${isActive ? 'opacity-100' : 'opacity-0'}`}
+              />
 
               {/* Number (Only visible when active) */}
               {isActive && (
@@ -236,12 +245,12 @@ export default function AiProjects() {
                 </div>
 
                 {/* Headline */}
-                <h2 className={`text-3xl md:text-5xl font-bold leading-tight mb-6 ${service.textColor}`}>
+                <h2 className={`text-2xl md:text-4xl font-bold leading-tight mb-4 ${service.textColor}`}>
                   {service.title}
                 </h2>
 
                 {/* Description */}
-                <div className={`text-lg md:text-xl ${service.textColor === 'text-white' ? 'text-gray-300' : 'text-[#133020]/80'} max-w-3xl font-light leading-relaxed mb-8`}>
+                <div className={`text-base md:text-lg text-gray-300 max-w-3xl font-light leading-relaxed mb-6`}>
                   {service.description}
                 </div>
 

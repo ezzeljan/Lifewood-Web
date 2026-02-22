@@ -58,7 +58,7 @@ export default function BrandValuesSection() {
     };
 
     return (
-        <section className="w-full bg-white py-8 sm:py-12 overflow-hidden">
+        <section className="w-full bg-white pb-8 sm:pb-12 pt-0 overflow-hidden">
             <div className="w-full mx-auto px-6 sm:px-8 lg:px-12">
                 <div className="flex flex-col lg:flex-row gap-2 lg:gap-3 items-stretch">
 

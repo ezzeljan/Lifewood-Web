@@ -2,13 +2,21 @@ import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Swiper, SwiperSlide, useSwiperSlide } from 'swiper/react';
-import { EffectCoverflow, Pagination, Navigation } from 'swiper/modules';
+import { EffectCoverflow, Pagination, Navigation, Autoplay } from 'swiper/modules';
 
 // Import Swiper styles
 import 'swiper/css';
 import 'swiper/css/effect-coverflow';
 import 'swiper/css/pagination';
 import 'swiper/css/navigation';
+
+import team1 from '../assets/careers/team_collaboration_1_1771797291139.png';
+import office1 from '../assets/careers/office_workspace_1_1771797311397.png';
+import event1 from '../assets/careers/company_event_1_1771797330736.png';
+import meeting1 from '../assets/careers/team_meeting_1_1771797346663.png';
+import culture1 from '../assets/careers/office_culture_1_1771797368830.png';
+import tech1 from '../assets/careers/tech_collaboration_1_1771797385702.png';
+import Masonry from '../components/Masonry';
 
 import './Careers.css';
 
@@ -122,7 +130,7 @@ export default function Careers() {
     return () => ctx.revert();
   }, []);
 
-  const baseJobs = [
+  const jobs = [
     {
       title: 'Senior AI Engineer',
       department: 'Engineering',
@@ -167,41 +175,21 @@ export default function Careers() {
       experience: '2+ years',
       description: 'Create intuitive interfaces for complex AI applications.',
       image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80&w=600'
-    },
-    {
-      title: 'Business Development',
-      department: 'Sales',
-      location: 'Multiple',
-      type: 'Full-time',
-      experience: '5+ years',
-      description: 'Drive growth through strategic partnerships.',
-      image: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=600'
     }
   ];
 
-  // duplicate to get 19 items
-  const jobs = [];
-  const titles = [
-    'Machine Learning Engineer', 'Frontend Developer', 'Backend Developer', 'Full Stack Engineer',
-    'Marketing Specialist', 'HR Manager', 'Finance Analyst', 'Legal Counsel', 'Customer Success Manager',
-    'Technical Writer', 'QA Engineer', 'Security Specialist', 'Cloud Architect'
-  ];
-
-  // Fill up to 19
-  for (let i = 0; i < 19; i++) {
-    const base = baseJobs[i % baseJobs.length];
-    const jobTitle = titles[i % titles.length] || base.title;
-
-    jobs.push({
-      ...base,
-      title: jobTitle, // Rotate titles for variety
-      id: i
-    });
-  }
-
   // The initial active slide index
-  const initialSlideIndex = 9;
+  const initialSlideIndex = 2;
   const initialImage = jobs[initialSlideIndex]?.image;
+
+  const masonryItems = [
+    { id: 1, img: team1, height: 600 },
+    { id: 2, img: office1, height: 400 },
+    { id: 3, img: event1, height: 500 },
+    { id: 4, img: meeting1, height: 700 },
+    { id: 5, img: culture1, height: 300 },
+    { id: 6, img: tech1, height: 550 },
+  ];
 
   return (
     <main className="careers relative overflow-hidden">
@@ -227,17 +215,22 @@ export default function Careers() {
               effect={'coverflow'}
               grabCursor={true}
               centeredSlides={true}
-              slidesPerView={'auto'}
+              slidesPerView={3}
+              loop={true}
+              autoplay={{
+                delay: 2500,
+                disableOnInteraction: false,
+              }}
               initialSlide={initialSlideIndex}
               coverflowEffect={{
                 rotate: 50,
                 stretch: 0,
                 depth: 100,
                 modifier: 1,
-                slideShadows: true,
+                slideShadows: false,
               }}
               pagination={{ clickable: true }}
-              modules={[EffectCoverflow, Pagination, Navigation]}
+              modules={[EffectCoverflow, Pagination, Navigation, Autoplay]}
               className="mySwiper"
               style={{ paddingBottom: '3rem' }}
             >
@@ -251,6 +244,29 @@ export default function Careers() {
             <p style={{ textAlign: 'center', marginTop: '1rem', color: '#666', fontSize: '0.9rem' }}>
               Swipe to explore
             </p>
+          </section>
+
+          {/* Motivation Section */}
+          <section className="motivation-section py-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#133020] mb-6 text-left">
+              It means motivating and growing teams
+            </h2>
+            <p className="text-lg md:text-xl text-[#555] leading-relaxed max-w-4xl text-left">
+              Teams that can initiate and learn on the run in order to deliver evolving technologies and targets.
+              It's a big challenge, but innovation, especially across borders, has never been the easy path.
+            </p>
+          </section>
+
+          {/* Masonry Section */}
+          <section className="careers-masonry py-12">
+            <Masonry items={masonryItems} />
+          </section>
+
+          {/* New Chapter Section */}
+          <section className="new-chapter-section py-12 text-center">
+            <h2 className="text-2xl md:text-3xl font-semibold text-[#133020] leading-relaxed max-w-5xl mx-auto">
+              If you're looking to turn the page on a new chapter in your career make contact with us today. At Lifewood, the adventure is always before you, it's why we've been described as &ldquo;always on, never off.&rdquo;
+            </h2>
           </section>
 
           {/* CTA Section */}

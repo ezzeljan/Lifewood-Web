@@ -3,6 +3,8 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Link } from 'react-router-dom';
 import ServicesSection from '../components/ServicesSection';
+import Clients from './Clients';
+import Waves from '../components/Waves';
 import './Hero.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -72,41 +74,9 @@ export default function Hero() {
       );
     }
 
-    // --- Clients Section Animation (Fade In) ---
-    if (clientsRef.current) {
-      gsap.fromTo(clientsRef.current,
-        { opacity: 0 },
-        {
-          opacity: 1,
-          duration: 1,
-          scrollTrigger: {
-            trigger: clientsRef.current,
-            start: 'top 85%',
-          }
-        }
-      );
-    }
 
-    // --- Stats Counter Animation ---
-    const stats = document.querySelectorAll('.stat-number');
-    stats.forEach(stat => {
-      const target = parseFloat(stat.getAttribute('data-target'));
 
-      gsap.to(stat, {
-        innerHTML: target,
-        duration: 2.5,
-        ease: 'power2.out',
-        snap: { innerHTML: 1 },
-        scrollTrigger: {
-          trigger: stat,
-          start: 'top 85%',
-          toggleActions: 'play none none reverse', // Replays on scroll up/down
-        },
-        onUpdate: function () {
-          stat.innerHTML = Math.ceil(this.targets()[0].innerHTML).toLocaleString();
-        }
-      });
-    });
+
 
 
 
@@ -136,33 +106,33 @@ export default function Hero() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  const clients = [
-    { name: 'Google', logo: 'https://placehold.co/200x80?text=Google' },
-    { name: 'ancestry', logo: 'https://framerusercontent.com/images/Yq2A1QFJLXgGQ3b7NZPthsD9RBk.png?scale-down-to=1024&width=1920&height=1080' },
-    { name: 'Moore Foundation', logo: 'https://placehold.co/200x80?text=Amazon' },
-    { name: 'BYU Pathway Worldwide', logo: 'https://placehold.co/200x80?text=IBM' },
-    { name: 'FamilySearch', logo: 'https://placehold.co/200x80?text=Oracle' },
-    { name: 'Microsoft', logo: 'https://placehold.co/200x80?text=Intel' },
-    { name: 'Apple', logo: 'https://placehold.co/200x80?text=Nvidia' },
-  ];
-
   return (
     <div className="hero-page-wrapper">
       {/* 1. Hero Section */}
-      <main className="hero" ref={containerRef} style={{ transform: 'perspective(1000px) rotateY(var(--hero-rotation, 0deg))' }}>
-        <div className="hero-content">
+      <main className="hero relative overflow-hidden flex items-center justify-center" ref={containerRef} style={{ transform: 'perspective(1000px) rotateY(var(--hero-rotation, 0deg))' }}>
+        {/* Waves Background */}
+        <div className="absolute inset-0 z-0 flex items-center justify-center opacity-30 pointer-events-none">
+          <Waves
+            lineColor="#046241"
+            backgroundColor="transparent"
+            waveSpeedX={0.02}
+            waveSpeedY={0.01}
+          />
+        </div>
+
+        <div className="hero-content relative z-10 text-center">
           <h1 ref={titleRef} className="hero-title">
             The world’s leading provider<br />
             of AI-powered data solutions.
           </h1>
 
-          <div ref={ctaRef} className="hero-cta">
+          <div ref={ctaRef} className="hero-cta mt-8">
             <Link to="/contact" className="btn btn-primary">
               Get In Touch
             </Link>
           </div>
         </div>
-        <div className="hero-bg-decoration"></div>
+        <div className="hero-bg-decoration pointer-events-none"></div>
       </main>
 
       {/* 2. About Us Section */}
@@ -177,7 +147,7 @@ export default function Hero() {
         </div>
 
         <div className="about-container relative z-10 text-center">
-          <h2 className="text-3xl font-bold text-[#FFB347] mb-6">About Us</h2>
+
           <p ref={aboutTextRef} className="about-text text-xl leading-relaxed max-w-3xl mx-auto">
             {"We empower our company and our clients to realize the transformative power of AI.".split(" ").map((word, wIndex) => (
               <span key={wIndex} className="about-word inline-block mr-2">
@@ -192,28 +162,56 @@ export default function Hero() {
         </div>
       </section>
 
-      {/* --- Global Stats Section --- */}
-      <section className="stats-section">
-        <div className="stats-container">
-          <div className="stat-item">
-            <span className="stat-number" data-target="40">0</span>
-            <span className="stat-symbol">+</span>
-            <p className="stat-label">Global Delivery Centers</p>
+      {/* 3. Bento Grid Features Section */}
+      <section className="bento-grid-section">
+        <h2 className="bento-title">Built for Global Scale</h2>
+        <div className="bento-grid-container">
+          <div className="bento-card card-primary">
+            <div className="bento-card-content">
+              <div className="bento-stat">
+                <span className="bento-number">40</span>
+                <span className="bento-symbol">+</span>
+              </div>
+              <h3 className="bento-label">Global Delivery Centers</h3>
+              <p className="bento-caption">Lifewood operates 40+ secure delivery centers worldwide, providing the backbone for AI data operations. These hubs ensure sensitive data is processed in controlled environments, with industrialized workflows and strict compliance standards across all regions.</p>
+            </div>
+
           </div>
-          <div className="stat-item">
-            <span className="stat-number" data-target="30">0</span>
-            <span className="stat-symbol">+</span>
-            <p className="stat-label">Countries Across All Continents</p>
+
+          <div className="bento-card card-secondary">
+            <div className="bento-card-content">
+              <div className="bento-stat">
+                <span className="bento-number">30</span>
+                <span className="bento-symbol">+</span>
+              </div>
+              <h3 className="bento-label">Countries Across All Continents</h3>
+              <p className="bento-caption">Lifewood’s global footprint spans 30+ countries and 40+ centers, including extensive operations in Africa, Asia, Europe, and the Americas, enabling region-specific datasets that reflect cultural and linguistic diversity.</p>
+            </div>
+
           </div>
-          <div className="stat-item">
-            <span className="stat-number" data-target="50">0</span>
-            <span className="stat-symbol">+</span>
-            <p className="stat-label">Language Capabilities and Dialects</p>
+
+          <div className="bento-card card-secondary">
+            <div className="bento-card-content">
+              <div className="bento-stat">
+                <span className="bento-number">50</span>
+                <span className="bento-symbol">+</span>
+              </div>
+              <h3 className="bento-label">Language Capabilities and Dialects</h3>
+              <p className="bento-caption">Lifewood provides data services in 50+ languages and dialects, building diverse multilingual datasets for LLMs, voice AI, and enterprise applications.</p>
+            </div>
+
           </div>
-          <div className="stat-item">
-            <span className="stat-number" data-target="56000">0</span>
-            <span className="stat-symbol">+</span>
-            <p className="stat-label">Global Online Resources</p>
+
+          <div className="bento-card card-wide">
+            <div className="bento-card-content">
+              <div className="bento-stat">
+                <span className="bento-number">56,000</span>
+                <span className="bento-symbol">+</span>
+              </div>
+              <h3 className="bento-label">Global Online Resources</h3>
+              <p className="bento-caption">With 56,788 online specialists worldwide, Lifewood mobilizes a flexible workforce for scalable data collection, annotation, and quality assurance, operating 24/7 across regions.</p>
+            </div>
+
           </div>
         </div>
       </section>
@@ -238,26 +236,8 @@ export default function Hero() {
         </div>
       </section>
 
-      {/* 3. Clients & Partners Section */}
-      <section ref={clientsRef} className="clients-section">
-        <div className="clients-container">
-          <h2 className="clients-title">Clients & Partners</h2>
-          <p className="clients-desc">
-            We are proud to partner and work with leading organizations worldwide in transforming data into meaningful solutions. Lifewood’s commitment to innovation and excellence has earned the trust of global brands across industries. Here are some of the valued clients and partners we’ve collaborated with:
-          </p>
-          <div className="scrolling-wrapper">
-            <div className="clients-track">
-              {/* Double the list for seamless infinite scroll */}
-              {[...clients, ...clients].map((client, index) => (
-                <div key={index} className="client-item">
-                  {/* Using text for now as placeholder images might break or look bad without proper styling */}
-                  <span>{client.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* 3. Clients & Partners Section - Sticker Wall (Imported) */}
+      <Clients />
 
       {/* 4. AI Data Services Section */}
       <ServicesSection />
