@@ -2,7 +2,13 @@ import { Link } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import appleLogo from '../assets/apple.png';
+import appleLogo from '../assets/clients/apple.png';
+import googleLogo from '../assets/clients/google.png';
+import microsoftLogo from '../assets/clients/microsoft.png';
+import ancestryLogo from '../assets/clients/ancestry.png';
+import byuLogo from '../assets/clients/byu.png';
+import familySearchLogo from '../assets/clients/familysearch.png';
+import mooreLogo from '../assets/clients/moore.png';
 import StickerPeel from '../components/StickerPeel';
 import './Clients.css';
 
@@ -10,13 +16,13 @@ gsap.registerPlugin(ScrollTrigger);
 
 
 const STICKER_LAYOUT = [
-    { left: '12%', top: '25%', size: '12%', imgUrl: 'https://ui-avatars.com/api/?name=Google&background=random&color=fff&rounded=true&bold=true' }, // Top left
+    { left: '12%', top: '25%', size: '12%', imgUrl: googleLogo }, // Top left
     { left: '72%', top: '20%', size: '11%', imgUrl: appleLogo }, // Top right
-    { left: '8%', top: '65%', size: '13%' }, // Bottom left
-    { left: '78%', top: '70%', size: '12%' }, // Bottom right
-    { left: '28%', top: '80%', size: '10%' }, // Bottom middle-left
-    { left: '82%', top: '45%', size: '9%' }, // Right middle
-    { left: '48%', top: '82%', size: '11%' }, // Bottom middle
+    { left: '8%', top: '65%', size: '13%', imgUrl: microsoftLogo }, // Bottom left
+    { left: '78%', top: '70%', size: '12%', imgUrl: ancestryLogo }, // Bottom right
+    { left: '28%', top: '80%', size: '10%', imgUrl: byuLogo }, // Bottom middle-left
+    { left: '82%', top: '45%', size: '9%', imgUrl: familySearchLogo }, // Right middle
+    { left: '48%', top: '82%', size: '11%', imgUrl: mooreLogo }, // Bottom middle
 ];
 
 // Generate exactly 7 layered sticker definitions

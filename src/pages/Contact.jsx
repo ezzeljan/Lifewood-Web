@@ -126,7 +126,7 @@ export default function Contact() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     // Animate submit button
     const submitBtn = e.target.querySelector('button[type="submit"]');
     gsap.timeline()
@@ -141,7 +141,7 @@ export default function Contact() {
 
     // Show success message
     setSubmitted(true);
-    
+
     // Reset form after delay
     setTimeout(() => {
       setFormData({
@@ -185,8 +185,8 @@ export default function Contact() {
     <main className="contact">
       <section className="contact-section">
         <div className="container">
-          <h1 ref={titleRef} className="section-title">Get In Touch</h1>
-          <p className="section-subtitle">We'd love to hear from you. Let's start a conversation.</p>
+          <h1 ref={titleRef} className="section-title">Let's start a conversation</h1>
+          <p className="section-subtitle">We'd love to hear from you.</p>
 
           <div className="contact-content">
             {/* Contact Form */}
@@ -259,32 +259,6 @@ export default function Contact() {
               )}
             </div>
 
-            {/* Contact Information */}
-            <div className="contact-info-container">
-              <h2>Contact Information</h2>
-              <div className="contact-info-grid">
-                {contactInfo.map((info, index) => (
-                  <div
-                    key={index}
-                    ref={(el) => (contactInfoRef.current[index] = el)}
-                    className="contact-info-card"
-                  >
-                    <div className="info-icon">{info.icon}</div>
-                    <h3>{info.title}</h3>
-                    <p className="info-details">{info.details}</p>
-                    <p className="info-description">{info.description}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Map Placeholder */}
-              <div className="map-container">
-                <div className="map-placeholder">
-                  <div className="map-icon">🗺️</div>
-                  <p>Visit us at any of our global locations</p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>

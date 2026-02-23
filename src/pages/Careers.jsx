@@ -70,8 +70,6 @@ const JobCard = ({ job, image, index }) => {
         >
           <div>
             <h3 style={{ color: textColor }}>{job.title}</h3>
-            <span className="job-type" style={{ color: isDarkBackground ? '#ccc' : '#333', borderColor: isDarkBackground ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)' }}>{job.type}</span>
-            <p className="job-department" style={{ color: isDarkBackground ? '#4ade80' : '#046241' }}>{job.department}</p>
             <p className="job-description" style={{ color: textColor }}>{job.description}</p>
           </div>
           <div>
@@ -113,16 +111,15 @@ export default function Careers() {
       // Validating refs exist
       if (introRef.current && mainContentRef.current) {
         tl.to(introRef.current, {
-          scale: 0.8,
           opacity: 0,
-          duration: 1.5,
-          ease: "power4.inOut",
+          duration: 1.2,
+          ease: "power2.inOut",
           delay: 0.5
         })
           .fromTo(mainContentRef.current,
-            { scale: 1.2, opacity: 0 },
-            { scale: 1, opacity: 1, duration: 1.2, ease: "power4.out" },
-            "<0.2" // Overlap animations
+            { opacity: 0 },
+            { opacity: 1, duration: 1, ease: "power2.out" },
+            "<0.2"
           );
       }
     });
@@ -132,49 +129,46 @@ export default function Careers() {
 
   const jobs = [
     {
-      title: 'Senior AI Engineer',
-      department: 'Engineering',
-      location: 'San Francisco, USA',
-      type: 'Full-time',
-      experience: '5+ years',
-      description: 'Lead the development of cutting-edge AI models and solutions.',
-      image: 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&fit=crop&q=80&w=600'
+      title: 'Intern (Applicable to PH only)',
+      location: 'Philippines',
+      experience: 'Current Student',
+      description: 'Kickstart your career with hands-on experience in global AI data operations.',
+      image: culture1
     },
     {
-      title: 'Data Scientist',
-      department: 'Research',
-      location: 'London, UK',
-      type: 'Full-time',
-      experience: '3+ years',
-      description: 'Develop advanced machine learning models for real-world applications.',
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=600'
-    },
-    {
-      title: 'Product Manager',
-      department: 'Product',
-      location: 'Singapore',
-      type: 'Full-time',
-      experience: '4+ years',
-      description: 'Shape the future of our AI product offerings.',
-      image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=600'
-    },
-    {
-      title: 'DevOps Engineer',
-      department: 'Infrastructure',
-      location: 'Berlin, Germany',
-      type: 'Full-time',
-      experience: '3+ years',
-      description: 'Build robust infrastructure for our global operations.',
-      image: 'https://images.unsplash.com/photo-1667372393119-c81c0cda0a63?auto=format&fit=crop&q=80&w=600'
-    },
-    {
-      title: 'UX/UI Designer',
-      department: 'Design',
-      location: 'Remote',
-      type: 'Full-time',
+      title: 'HR/Admin Assistant',
+      location: 'Global Centers',
       experience: '2+ years',
-      description: 'Create intuitive interfaces for complex AI applications.',
-      image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80&w=600'
+      description: 'Support our global workforce through efficient administrative and HR operations.',
+      image: office1
+    },
+    {
+      title: 'Admin Accounting',
+      location: 'Corporate HQ',
+      experience: '3+ years',
+      description: 'Maintain financial integrity and support cross-border administrative accounting.',
+      image: meeting1
+    },
+    {
+      title: 'Marketing & Sales Executive',
+      location: 'San Francisco / Remote',
+      experience: '4+ years',
+      description: 'Drive global growth by connecting brands with world-class AI data solutions.',
+      image: team1
+    },
+    {
+      title: 'Data Curation (Genealogy Project)',
+      location: 'Remote / Hybrid',
+      experience: '2+ years',
+      description: 'Work on specialized genealogy data curation using advanced AI-assisted tools.',
+      image: tech1
+    },
+    {
+      title: 'AI Video Creator/Editor',
+      location: 'Remote',
+      experience: '3+ years',
+      description: 'Pioneer the future of visual storytelling using cutting-edge Generative AI video tools.',
+      image: event1
     }
   ];
 

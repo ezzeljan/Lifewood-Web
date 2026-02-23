@@ -11,7 +11,7 @@
 
 .careers-section .section-title {
   font-size: 3rem;
-  text-align: center;
+  text-align: left;
   margin-bottom: 1rem;
   color: #133020;
   opacity: 1;
@@ -19,7 +19,7 @@
 }
 
 .careers-section .section-subtitle {
-  text-align: center;
+  text-align: left;
   margin-bottom: 4rem;
   font-size: 1.25rem;
   opacity: 1;
@@ -37,7 +37,7 @@
   font-weight: 700;
   color: #133020;
   margin-bottom: 3rem;
-  text-align: center;
+  text-align: left;
   opacity: 1;
   visibility: visible;
 }
@@ -225,7 +225,7 @@
 /* CTA Section */
 .careers-cta {
   text-align: center;
-  padding: 3rem;
+  padding: 4rem;
   background: linear-gradient(135deg, rgba(4, 98, 65, 0.05) 0%, rgba(255, 179, 71, 0.05) 100%);
   border-radius: 15px;
   border: 2px dashed rgba(4, 98, 65, 0.2);
@@ -251,6 +251,8 @@
 
 .careers-cta .btn {
   display: inline-block;
+  border-radius: 50px;
+  padding: 12px 32px;
 }
 
 /* Responsive Design */
@@ -333,7 +335,7 @@
   position: relative;
   width: 100%;
   height: 100%;
-  text-align: center;
+  text-align: left;
   transition: transform 0.8s;
   transform-style: preserve-3d;
   border-radius: 12px;
@@ -395,10 +397,11 @@
   background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
   color: white;
   transform: rotateY(180deg);
-  padding: 20px;
+  padding: 32px 40px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  align-items: flex-start;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -456,13 +459,13 @@
 }
 
 .flip-card-back .btn-primary {
-  width: 100%;
-  padding: 10px;
+  width: auto;
+  padding: 10px 24px;
   background: #4ade80;
   color: #1a1a1a;
   border: none;
   font-weight: bold;
-  border-radius: 6px;
+  border-radius: 50px;
   cursor: pointer;
   transition: background 0.3s;
 }

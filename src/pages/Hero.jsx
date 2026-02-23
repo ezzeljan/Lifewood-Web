@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import ServicesSection from '../components/ServicesSection';
 import Clients from './Clients';
 import Waves from '../components/Waves';
+import ShinyText from '../components/ShinyText';
 import './Hero.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -14,6 +15,7 @@ export default function Hero() {
   const titleRef = useRef(null);
   const subtitleRef = useRef(null);
   const ctaRef = useRef(null);
+  const amazedRef = useRef(null);
 
   // About Section Refs
   const aboutRef = useRef(null);
@@ -103,6 +105,22 @@ export default function Hero() {
       );
     }
 
+    // --- Amazed Color Change at Footer Bottom ---
+    if (amazedRef.current) {
+      gsap.to(amazedRef.current, {
+        color: '#FFB347',
+        duration: 0.5,
+        scrollTrigger: {
+          trigger: 'body', // Use body to detect end of page
+          start: 'bottom bottom', // When bottom of body hits bottom of viewport
+          end: 'bottom bottom',
+          toggleActions: 'play none none reverse',
+          onEnter: () => gsap.to(amazedRef.current, { color: '#FFB347', duration: 0.5 }),
+          onLeaveBack: () => gsap.to(amazedRef.current, { color: '#133020', duration: 0.5 }),
+        }
+      });
+    }
+
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
@@ -122,8 +140,23 @@ export default function Hero() {
 
         <div className="hero-content relative z-10 text-center">
           <h1 ref={titleRef} className="hero-title">
-            The world’s leading provider<br />
-            of AI-powered data solutions.
+            <ShinyText
+              text="The world’s leading provider"
+              disabled={false}
+              speed={3}
+              className="hero-title-shiny"
+              color="#133020"
+              shineColor="#f3f4f6"
+            />
+            <br />
+            <ShinyText
+              text="of AI-powered data solutions."
+              disabled={false}
+              speed={3}
+              className="hero-title-shiny"
+              color="#133020"
+              shineColor="#f3f4f6"
+            />
           </h1>
 
           <div ref={ctaRef} className="hero-cta mt-8">
@@ -241,6 +274,15 @@ export default function Hero() {
 
       {/* 4. AI Data Services Section */}
       <ServicesSection />
+
+      {/* 5. Amazed Section */}
+      <section className="amazed-section py-4 bg-white text-center overflow-hidden">
+        <div className="container mx-auto">
+          <h2 className="amazed-title" ref={amazedRef}>
+            be amazed
+          </h2>
+        </div>
+      </section>
 
 
     </div>

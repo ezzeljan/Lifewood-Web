@@ -1,90 +1,63 @@
 import React from 'react';
+import DomeGallery from '../components/DomeGallery';
 
-const row1 = ["United States", "Brazil", "United Kingdom", "Germany", "Finland"];
-const row2 = ["Africa", "South Africa", "Madagascar", "Middle East", "India", "Bangladesh", "China", "Thailand", "Malaysia", "Vietnam"];
-const row3 = ["Hongkong", "Philippines", "Indonesia", "Japan", "Australia"];
-
-const images = [
-  "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=400&q=80",
-  "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=400&q=80"
-];
+// Import career images for gallery
+import team1 from '../assets/careers/team_collaboration_1_1771797291139.png';
+import office1 from '../assets/careers/office_workspace_1_1771797311397.png';
+import event1 from '../assets/careers/company_event_1_1771797330736.png';
+import meeting1 from '../assets/careers/team_meeting_1_1771797346663.png';
+import culture1 from '../assets/careers/office_culture_1_1771797368830.png';
+import tech1 from '../assets/careers/tech_collaboration_1_1771797385702.png';
 
 export default function Offices() {
+  const galleryImages = [
+    { src: team1, alt: 'Team Collaboration' },
+    { src: office1, alt: 'Office Workspace' },
+    { src: event1, alt: 'Company Event' },
+    { src: meeting1, alt: 'Team Meeting' },
+    { src: culture1, alt: 'Office Culture' },
+    { src: tech1, alt: 'Tech Collaboration' },
+  ];
+
   return (
-    <main className="page section">
-      <div className="w-full pt-4 pb-8">
-        <h1 className="section-title text-5xl md:text-6xl font-bold text-left mb-4 text-[#046241] px-8 leading-tight">
-          Largest Global Data Collection<br />Resources Distribution
-        </h1>
-      </div>
-
-      {/* Marquee Section - Full Width */}
-      <div className="w-screen relative left-1/2 -translate-x-1/2 py-4 space-y-2 overflow-hidden bg-gray-50/50">
-        {/* Row 1 - Scroll Right */}
-        <div className="flex overflow-hidden">
-          <div className="flex animate-marquee-right whitespace-nowrap py-1">
-            {[...row1, ...row1, ...row1, ...row1].map((item, index) => (
-              <React.Fragment key={index}>
-                <span className="inline-block px-8 py-4 rounded-xl bg-[#133020] text-white text-3xl md:text-5xl font-bold mx-1 align-middle">
-                  {item}
-                </span>
-                <img
-                  src={images[index % images.length]}
-                  alt=""
-                  className="inline-block h-20 w-32 object-cover rounded-xl mx-1 align-middle"
-                />
-              </React.Fragment>
-            ))}
-          </div>
+    <main className="page overflow-hidden" style={{ marginTop: 0 }}>
+      <section style={{
+        minHeight: '85vh',
+        display: 'flex',
+        alignItems: 'center',
+        position: 'relative',
+        overflow: 'hidden',
+        paddingTop: '0',
+        paddingBottom: '0'
+      }}>
+        {/* Background DomeGallery */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 0,
+          pointerEvents: 'none',
+          opacity: 0.3,
+          transform: 'scale(1.2)'
+        }}>
+          <DomeGallery
+            images={galleryImages}
+            autoSpin={true}
+            autoSpinSpeed={0.03}
+            grayscale={true}
+            overlayBlurColor="#ffffff"
+            fit={0.7}
+          />
         </div>
 
-        {/* Row 2 - Scroll Left */}
-        <div className="flex overflow-hidden">
-          <div className="flex animate-marquee-left whitespace-nowrap py-1">
-            {[...row2, ...row2, ...row2].map((item, index) => (
-              <React.Fragment key={index}>
-                <span className="inline-block px-8 py-4 rounded-xl bg-[#046241] text-white text-3xl md:text-5xl font-bold mx-1 align-middle">
-                  {item}
-                </span>
-                <img
-                  src={images[(index + 3) % images.length]}
-                  alt=""
-                  className="inline-block h-20 w-32 object-cover rounded-xl mx-1 align-middle"
-                />
-              </React.Fragment>
-            ))}
-          </div>
+        <div className="w-full relative z-10">
+          <h1 className="section-title text-5xl md:text-6xl font-bold text-left mb-4 text-[#046241] px-8 leading-tight">
+            Largest Global Data Collection<br />Resources Distribution
+          </h1>
         </div>
-
-        {/* Row 3 - Scroll Right */}
-        <div className="flex overflow-hidden">
-          <div className="flex animate-marquee-right whitespace-nowrap py-1">
-            {[...row3, ...row3, ...row3, ...row3].map((item, index) => (
-              <React.Fragment key={index}>
-                <span className="inline-block px-8 py-4 rounded-xl bg-[#FFB347] text-[#133020] text-3xl md:text-5xl font-bold mx-1 align-middle">
-                  {item}
-                </span>
-                <img
-                  src={images[(index + 6) % images.length]}
-                  alt=""
-                  className="inline-block h-20 w-32 object-cover rounded-xl mx-1 align-middle"
-                />
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
-      </div>
+      </section>
 
       <div className="container mx-auto px-4 pb-12">
-        <div className="w-full h-screen rounded-3xl overflow-hidden shadow-2xl mt-8">
+        <div className="w-full h-[500px] rounded-3xl overflow-hidden shadow-2xl mt-8">
           <iframe
             src="https://lifewoodworldwidemap.vercel.app/"
             title="Lifewood Worldwide Map"

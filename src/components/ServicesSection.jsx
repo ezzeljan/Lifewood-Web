@@ -64,7 +64,7 @@ export default function ServicesSection() {
     }, []);
 
     return (
-        <section ref={sectionRef} className="w-full bg-[#f8f9fa] py-20">
+        <section ref={sectionRef} className="w-full bg-white py-20">
             <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="mb-12">
                     <h1 className="text-6xl font-bold text-[#133020] mb-4">AI Data Services</h1>
