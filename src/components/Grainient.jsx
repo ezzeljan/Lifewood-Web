@@ -80,9 +80,10 @@ void mainImage(out vec4 o, vec2 C){
   vec3 col=mix(layer1,layer2,S(v0,v1,tuv.y));
 
   vec2 grainUv=uv*max(uGrainScale,0.001);
-  if(uGrainAnimated>0.5){grainUv+=vec2(iTime*0.05);} 
+  if(uGrainAnimated>0.5){grainUv+=vec2(iTime*0.05);}
   float grain=fract(sin(dot(grainUv,vec2(12.9898,78.233)))*43758.5453);
-  col+=(grain-0.5)*uGrainAmount;
+  // Disabled grain application
+  // col+=(grain-0.5)*uGrainAmount;
 
   col=(col-0.5)*uContrast+0.5;
   float luma=dot(col,vec3(0.2126,0.7152,0.0722));
@@ -109,8 +110,8 @@ const Grainient = ({
   blendAngle = 0.0,
   blendSoftness = 0.05,
   rotationAmount = 500.0,
-  noiseScale = 2.0,
-  grainAmount = 0.1,
+  noiseScale = 0.0,
+  grainAmount = 0.0,
   grainScale = 2.0,
   grainAnimated = false,
   contrast = 1.5,

@@ -1,48 +1,30 @@
 import React from 'react';
-import OrbitImages from '../components/OrbitImages';
 import Grainient from '../components/Grainient';
 import './Philanthropy.css';
 
 export default function Philanthropy() {
-  const orbitImageUrls = [
-    "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=150&q=80&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=150&q=80&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=150&q=80&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1555255707-c07966088b7b?w=150&q=80&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=150&q=80&auto=format&fit=crop",
-  ];
 
   return (
-    <main className="page section flex flex-col items-center">
-      <div className="w-full pt-0 pb-2">
-        <h1 className="section-title text-5xl md:text-6xl font-bold text-left px-8 mb-4 text-[#046241]">Transforming Communities <br></br> Worldwide</h1>
+    <main className="page flex flex-col items-center pb-8">
+      {/* Full Width Image with Overlay Text */}
+      <div className="w-full relative h-[400px] md:h-[500px] lg:h-[600px] mb-8">
+        <img
+          src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=1600&q=80&auto=format&fit=crop"
+          alt="Philanthropy and Community"
+          className="w-full h-full object-cover"
+        />
+        {/* Dark overlay to make text pop */}
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center p-4">
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white text-center leading-tight drop-shadow-md">
+            Transforming Communities <br /> Worldwide
+          </h1>
+        </div>
       </div>
 
-      <div className="w-full my-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          {/* Left Column: Orbit */}
-          <section className="w-full relative flex flex-col items-center justify-center overflow-hidden h-[350px] md:h-[400px]">
-            <OrbitImages
-              images={orbitImageUrls}
-              responsive={true}
-              baseWidth={1000}
-              radiusX={350}
-              radiusY={120}
-              showPath={true}
-              pathColor="#046241"
-              pathWidth={2}
-              itemSize={160}
-              duration={50}
-            />
-          </section>
-
-          {/* Right Column: Text */}
-          <div className="flex flex-col justify-center text-center lg:text-left px-4 lg:px-8">
-            <p className="text-base leading-relaxed text-[#133020]/80 font-light">
-              Our vision is of a world where financial investment plays a central role in solving the social and environmental challenges facing the global community, specifically in Africa and the Indian sub-continent.
-            </p>
-          </div>
-        </div>
+      <div className="w-full max-w-4xl mx-auto mb-8 px-6">
+        <p className="text-lg md:text-xl lg:text-2xl leading-relaxed text-[#133020]/90 font-light text-center">
+          Our vision is of a world where financial investment plays a central role in solving the social and environmental challenges facing the global community, specifically in Africa and the Indian sub-continent.
+        </p>
       </div>
       <div className="w-full pb-8">
         <div className="w-full h-[45vh] min-h-[350px] overflow-hidden shadow-xl mt-4">

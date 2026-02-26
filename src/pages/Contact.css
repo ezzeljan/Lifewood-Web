@@ -46,7 +46,7 @@
 
 .form-container h2 {
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #133020;
   margin-bottom: 2rem;
   border-bottom: 2px solid #FFB347;
@@ -155,7 +155,7 @@
 
 .contact-info-container h2 {
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #133020;
   border-bottom: 2px solid #FFC370;
   padding-bottom: 1rem;
@@ -195,7 +195,7 @@
 
 .contact-info-card h3 {
   font-size: 1.1rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #133020;
   margin-bottom: 0.5rem;
   opacity: 1;

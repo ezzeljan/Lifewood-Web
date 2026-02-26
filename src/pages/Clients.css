@@ -1,62 +1,57 @@
-/* Base wrapper for the scrolling parallax hero */
-.parallax-hero-wrapper {
-    position: relative;
-    height: 300vh;
-    /* Scroller length */
+.clients-marquee-wrapper {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    overflow: hidden;
+    padding: 2rem 0;
+    background: transparent;
+    pointer-events: none;
 }
 
-/* Sticky viewport */
-.sticky-container {
-    position: sticky;
-    top: var(--total-header-height, 137px);
-    /* Default or dynamic header height */
-    height: calc(100vh - var(--total-header-height, 137px));
+.clients-marquee {
     display: flex;
+    white-space: nowrap;
+    animation: marquee 30s linear infinite;
+    gap: 4rem;
+    padding-left: 4rem;
+    /* Match gap for seamless loop */
+    width: max-content;
+}
+
+.client-logo-item {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    width: 200px;
+    height: 100px;
 }
 
-/* Typography Overrides */
-.t-heading-1-tucked {
-    font-size: clamp(3.5rem, 8vw, 8rem);
-    letter-spacing: -0.04em;
-    line-height: 0.9;
+.client-logo-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    filter: grayscale(100%) opacity(70%);
+    transition: filter 0.3s ease;
 }
 
-/* Aspect Ratio Container for Stickers Collage */
-.sticker-collage-container {
-    aspect-ratio: 1440 / 826;
-    width: 100vw;
-    max-width: 1600px;
-    transform: translate(-50%, -50%);
+@keyframes marquee {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
 }
 
 @media (max-width: 768px) {
-    .sticker-collage-container {
-        aspect-ratio: auto;
-        width: 100vw;
-        height: 100%;
-        min-height: 450px;
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
+    .client-logo-item {
+        width: 120px;
+        height: 60px;
     }
 
-    .sticker {
-        --sticker-responsive-width: 45px !important;
-        /* Smaller for mobile */
+    .clients-marquee {
+        gap: 2rem;
+        padding-left: 2rem;
     }
-}
-
-.sticker {
-    --sticker-responsive-width: 100px;
-    /* Smaller base size */
-}
-
-.parallax-hero-content {
-    position: relative;
-    width: 100%;
-    height: 100%;
 }

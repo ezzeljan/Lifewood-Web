@@ -1,13 +1,27 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
-import './Navigation.css';
 import logo from '../assets/logo.png';
+import './Navigation.css';
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const menuRef = useRef(null);
+  const location = useLocation();
+
+  const isPathActive = (path) => {
+    if (path === '/') return location.pathname === '/';
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
+
+  const isItemActive = (item) => {
+    if (isPathActive(item.path)) return true;
+    if (item.children) {
+      return item.children.some(child => isPathActive(child.path));
+    }
+    return false;
+  };
 
   const navLinks = [
     { path: '/', label: 'Home' },
@@ -46,9 +60,6 @@ export default function Navigation() {
   return (
     <nav className="navbar">
       <div className="nav-container" ref={menuRef}>
-        <Link to="/" className="nav-logo">
-          <img src={logo} alt="Lifewood" className="nav-logo-img" />
-        </Link>
 
         <button
           className="menu-toggle"
@@ -69,14 +80,14 @@ export default function Navigation() {
               onMouseLeave={() => link.children && setActiveDropdown(null)}
             >
               {link.children ? (
-                <span className="nav-link" style={{ cursor: 'default' }}>
+                <span className={`nav-link ${isItemActive(link) ? 'active' : ''}`} style={{ cursor: 'default' }}>
                   {link.label}
                   {link.children && <ChevronDown size={14} className="ml-1" strokeWidth={2.5} />}
                 </span>
               ) : (
                 <Link
                   to={link.path}
-                  className="nav-link"
+                  className={`nav-link ${isItemActive(link) ? 'active' : ''}`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {link.label}
@@ -90,7 +101,7 @@ export default function Navigation() {
                     <li key={child.path}>
                       <Link
                         to={child.path}
-                        className="dropdown-link"
+                        className={`dropdown-link ${isItemActive(child) ? 'active' : ''}`}
                         onClick={() => {
                           setIsMenuOpen(false);
                           setActiveDropdown(null);
@@ -105,6 +116,16 @@ export default function Navigation() {
             </li>
           ))}
         </ul>
+      </div>
+
+      <div className="navbar-logo-container">
+        <Link to="/" className="nav-logo-link">
+          <img src={logo} alt="Lifewood Logo" className="nav-logo-img" />
+        </Link>
+      </div>
+
+      <div className="navbar-cta-container">
+        <Link to="/contact" className="nav-cta-btn">Get in Touch</Link>
       </div>
     </nav>
   );

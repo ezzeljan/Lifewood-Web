@@ -40,7 +40,7 @@
 
 .about-text h2 {
   font-size: 2.2rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #133020;
   margin-bottom: 2rem;
   opacity: 1;
@@ -106,7 +106,7 @@
 
 .offices-section h2 {
   font-size: 2.2rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #133020;
   margin-bottom: 3rem;
   text-align: center;
@@ -147,7 +147,7 @@
 
 .office-card h3 {
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #133020;
   margin-bottom: 0.5rem;
   opacity: 1;

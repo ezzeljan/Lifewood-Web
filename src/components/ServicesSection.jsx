@@ -67,7 +67,7 @@ export default function ServicesSection() {
         <section ref={sectionRef} className="w-full bg-white py-20">
             <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="mb-12">
-                    <h1 className="text-6xl font-bold text-[#133020] mb-4">AI Data Services</h1>
+                    <h1 className="text-6xl font-light text-[#133020] mb-4">AI Data Services</h1>
                     <p className="text-[#046241] text-lg">
                         Lifewood offers AI and IT services that enhance decision-making, reduce costs, and improve productivity to optimize organizational performance.
                     </p>

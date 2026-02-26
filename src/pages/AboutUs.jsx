@@ -283,7 +283,7 @@ export default function AboutUs() {
       <div className="w-screen relative left-1/2 -translate-x-1/2 py-8 space-y-4 overflow-hidden bg-white">
         {/* Row 1 - Scroll Right */}
         <div className="flex overflow-hidden">
-          <div className="flex animate-marquee-right whitespace-nowrap py-1">
+          <div className="flex animate-marquee-right whitespace-nowrap py-1 w-max">
             {[...marqueeRows.row1, ...marqueeRows.row1, ...marqueeRows.row1, ...marqueeRows.row1].map((item, index) => (
               <React.Fragment key={index}>
                 <span className="inline-block px-8 py-4 rounded-xl bg-[#133020] text-white text-3xl md:text-5xl font-bold mx-2 align-middle">
@@ -301,8 +301,8 @@ export default function AboutUs() {
 
         {/* Row 2 - Scroll Left */}
         <div className="flex overflow-hidden">
-          <div className="flex animate-marquee-left whitespace-nowrap py-1">
-            {[...marqueeRows.row2, ...marqueeRows.row2, ...marqueeRows.row2].map((item, index) => (
+          <div className="flex animate-marquee-left whitespace-nowrap py-1 w-max">
+            {[...marqueeRows.row2, ...marqueeRows.row2, ...marqueeRows.row2, ...marqueeRows.row2].map((item, index) => (
               <React.Fragment key={index}>
                 <span className="inline-block px-8 py-4 rounded-xl bg-[#046241] text-white text-3xl md:text-5xl font-bold mx-2 align-middle">
                   {item}
@@ -319,7 +319,7 @@ export default function AboutUs() {
 
         {/* Row 3 - Scroll Right */}
         <div className="flex overflow-hidden">
-          <div className="flex animate-marquee-right whitespace-nowrap py-1">
+          <div className="flex animate-marquee-right whitespace-nowrap py-1 w-max">
             {[...marqueeRows.row3, ...marqueeRows.row3, ...marqueeRows.row3, ...marqueeRows.row3].map((item, index) => (
               <React.Fragment key={index}>
                 <span className="inline-block px-8 py-4 rounded-xl bg-[#FFB347] text-[#133020] text-3xl md:text-5xl font-bold mx-2 align-middle">

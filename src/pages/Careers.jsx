@@ -97,35 +97,6 @@ const JobCard = ({ job, image, index }) => {
 };
 
 export default function Careers() {
-  const [introComplete, setIntroComplete] = useState(false);
-  const introRef = useRef(null);
-  const mainContentRef = useRef(null);
-
-  useEffect(() => {
-    // Initial Animation Sequence
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
-        onComplete: () => setIntroComplete(true)
-      });
-
-      // Validating refs exist
-      if (introRef.current && mainContentRef.current) {
-        tl.to(introRef.current, {
-          opacity: 0,
-          duration: 1.2,
-          ease: "power2.inOut",
-          delay: 0.5
-        })
-          .fromTo(mainContentRef.current,
-            { opacity: 0 },
-            { opacity: 1, duration: 1, ease: "power2.out" },
-            "<0.2"
-          );
-      }
-    });
-
-    return () => ctx.revert();
-  }, []);
 
   const jobs = [
     {
@@ -187,21 +158,7 @@ export default function Careers() {
 
   return (
     <main className="careers relative overflow-hidden">
-      {/* Intro Overlay */}
-      {!introComplete && (
-        <div
-          ref={introRef}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-white pointer-events-none"
-        >
-          <img
-            src={initialImage}
-            alt="Intro"
-            className="w-full h-full object-cover"
-          />
-        </div>
-      )}
-
-      <section className="careers-section" ref={mainContentRef} style={{ opacity: 0 }}>
+      <section className="careers-section">
         <div className="container">
           {/* Open Positions Carousel */}
           <section className="jobs-section">
@@ -259,7 +216,7 @@ export default function Careers() {
           {/* New Chapter Section */}
           <section className="new-chapter-section py-12 text-center">
             <h2 className="text-2xl md:text-3xl font-semibold text-[#133020] leading-relaxed max-w-5xl mx-auto">
-              If you're looking to turn the page on a new chapter in your career make contact with us today. At Lifewood, the adventure is always before you, it's why we've been described as &ldquo;always on, never off.&rdquo;
+              If you're looking to turn the page on a new chapter in your career make contact with us today. At Lifewood, the adventure is always before you, it's why we've been described as &ldquo;<span className="quote-highlight">always on, never off.</span>&rdquo;
             </h2>
           </section>
 

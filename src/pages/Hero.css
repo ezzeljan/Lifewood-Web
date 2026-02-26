@@ -26,8 +26,8 @@
 
 .hero-title {
   font-size: 9rem;
-  font-weight: 800;
-  color: #133020;
+  font-weight: 300;
+  color: #ffffff;
   margin-bottom: 2rem;
   line-height: 1.2;
   letter-spacing: -0.02em;
@@ -170,8 +170,7 @@
 
 /* --- About Us Section --- */
 .about-section {
-  background-color: #133020;
-  color: #ffffff;
+  color: #000000;
   padding: 6rem 2rem 3rem 2rem;
   display: flex;
   justify-content: center;
@@ -186,16 +185,15 @@
 
 .about-text {
   font-size: clamp(1.5rem, 4vw, 2.5rem);
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1.4;
+  color: #000000;
 }
 
 /* --- Bento Grid Features Section --- */
 .bento-grid-section {
-  background-color: #ffffff;
-  /* Light background */
+  background: transparent;
   padding: 2rem 2rem;
-  /* Halved section padding */
   width: 100%;
   position: relative;
   overflow: hidden;
@@ -204,11 +202,9 @@
 .bento-title {
   max-width: 1200px;
   margin: 0 auto 1.5rem auto;
-  /* Reduced margin */
   font-size: clamp(1.8rem, 4vw, 2.5rem);
-  /* Smaller title */
-  font-weight: 800;
-  color: #111;
+  font-weight: 400;
+  color: #000000;
   letter-spacing: -0.02em;
   text-align: left;
 }
@@ -231,15 +227,13 @@
 
 .bento-card {
   position: relative;
-  background: #ffffff;
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  border: 1px solid rgba(4, 98, 65, 0.08);
-  /* Darker border for light theme */
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid grey;
   border-radius: 20px;
-  /* Slightly smaller radius */
-  padding: 1rem;
-  /* Minimum padding */
+  padding: 2.5rem;
+  box-shadow: none;
   transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
   overflow: hidden;
   display: flex;
@@ -252,7 +246,8 @@
 .card-primary {
   grid-column: span 2;
   grid-row: span 2;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1rem 2.5rem;
 }
 
 .card-secondary {
@@ -274,11 +269,9 @@
 
 .bento-number {
   font-size: clamp(1.8rem, 4vw, 2.8rem);
-  /* Scaled down */
   font-weight: 800;
   line-height: 1;
-  background: linear-gradient(135deg, #046241 0%, #133020 100%);
-  /* Darker gradient for light theme */
+  background: linear-gradient(135deg, #000000 0%, #333333 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -299,22 +292,17 @@
 
 .bento-label {
   font-size: 1.1rem;
-  /* Smaller label */
   font-weight: 600;
-  color: #133020;
-  /* Dark color */
+  color: #000000;
   margin-bottom: 0.35rem;
-  /* Tighter margin */
   letter-spacing: -0.01em;
 }
 
 .bento-caption {
   font-size: 0.85rem;
-  /* Smaller text */
   margin-top: 0.25rem;
   line-height: 1.4;
-  color: rgba(19, 48, 32, 0.61);
-  /* Dark muted color */
+  color: rgba(0, 0, 0, 0.7);
   font-weight: 400;
 }
 
@@ -346,8 +334,12 @@
   }
 
   .bento-card {
-    padding: 2rem;
+    padding: 2.5rem;
     min-height: auto;
+  }
+
+  .card-primary {
+    padding: 1.5rem 2.5rem;
   }
 
   .bento-number {
@@ -379,7 +371,7 @@
 .clients-title {
   text-align: center;
   font-size: 2.5rem;
-  font-weight: 800;
+  font-weight: 400;
   color: #133020;
   margin: 0;
   letter-spacing: -0.01em;
@@ -536,9 +528,71 @@
 
 .amazed-title {
   font-size: clamp(4rem, 15vw, 12rem);
-  font-weight: 900;
+  font-weight: 400;
   line-height: 1;
   letter-spacing: -0.05em;
   color: #133020;
   margin: 0;
+}
+
+/* Custom Sign Up Button */
+.custom-signup-btn {
+  --primary-color: #000000;
+  --secondary-color: #fff;
+  --hover-color: #FFB347;
+  --arrow-width: 10px;
+  --arrow-stroke: 2px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 20px;
+  color: var(--secondary-color);
+  padding: 1em 1.8em;
+  background: var(--primary-color);
+  display: flex;
+  transition: 0.2s background;
+  align-items: center;
+  gap: 0.6em;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.custom-signup-btn .arrow-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.custom-signup-btn .arrow {
+  margin-top: 1px;
+  width: var(--arrow-width);
+  background: var(--primary-color);
+  height: var(--arrow-stroke);
+  position: relative;
+  transition: 0.2s;
+}
+
+.custom-signup-btn .arrow::before {
+  content: "";
+  box-sizing: border-box;
+  position: absolute;
+  border: solid var(--secondary-color);
+  border-width: 0 var(--arrow-stroke) var(--arrow-stroke) 0;
+  display: inline-block;
+  top: -3px;
+  right: 3px;
+  transition: 0.2s;
+  padding: 3px;
+  transform: rotate(-45deg);
+}
+
+.custom-signup-btn:hover {
+  background: var(--hover-color);
+}
+
+.custom-signup-btn:hover .arrow {
+  background: var(--secondary-color);
+}
+
+.custom-signup-btn:hover .arrow:before {
+  right: 0;
 }

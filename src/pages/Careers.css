@@ -34,7 +34,7 @@
 .jobs-section h2,
 .benefits-section h2 {
   font-size: 2.2rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #133020;
   margin-bottom: 3rem;
   text-align: left;
@@ -94,7 +94,7 @@
 
 .job-header h3 {
   font-size: 1.3rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #133020;
   flex: 1;
   opacity: 1;
@@ -195,7 +195,7 @@
 
 .benefit-card h3 {
   font-size: 1.1rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #133020;
   margin-bottom: 0.75rem;
   opacity: 1;
@@ -389,7 +389,7 @@
   z-index: 10;
   text-align: left;
   font-size: 1.2rem;
-  font-weight: bold;
+  font-weight: 400;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
@@ -468,6 +468,27 @@
   border-radius: 50px;
   cursor: pointer;
   transition: background 0.3s;
+}
+
+.quote-highlight {
+  position: relative;
+  white-space: nowrap;
+  color: #133020;
+  z-index: 1;
+}
+
+.quote-highlight::after {
+  content: '';
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  bottom: 2px;
+  height: 45%;
+  background-color: #FFB347;
+  opacity: 0.3;
+  z-index: -1;
+  transform: skewX(-15deg);
+  border-radius: 2px;
 }
 
 .flip-card-back .btn-primary:hover {

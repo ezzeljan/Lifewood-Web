@@ -8,7 +8,7 @@
   --saffron: #FFC370;
   --castleton-green: #046241;
   --dark-serpent: #133020;
-  
+
   --transition-speed: 0.3s;
   --transition-ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
@@ -17,6 +17,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: 'Manrope', sans-serif !important;
 }
 
 html {
@@ -70,20 +71,7 @@ nav a {
   text-decoration: none;
 }
 
-nav a::after {
-  content: '';
-  position: absolute;
-  bottom: -5px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background-color: var(--saffron);
-  transition: width 0.3s ease;
-}
 
-nav a:hover::after {
-  width: 100%;
-}
 
 /* Utility Classes */
 .container {
@@ -99,7 +87,7 @@ nav a:hover::after {
 
 .section-title {
   font-size: 3rem;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--dark-serpent);
   margin-bottom: 2rem;
   line-height: 1.2;
@@ -165,19 +153,19 @@ nav a:hover::after {
   .section-title {
     font-size: 2rem;
   }
-  
+
   .section-subtitle {
     font-size: 1rem;
   }
-  
+
   .section {
     padding: 3rem 1rem;
   }
-  
+
   nav ul {
     gap: 1rem;
   }
-  
+
   nav a {
     font-size: 0.85rem;
   }

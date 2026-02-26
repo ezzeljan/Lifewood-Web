@@ -4,8 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Link } from 'react-router-dom';
 import ServicesSection from '../components/ServicesSection';
 import Clients from './Clients';
-import Waves from '../components/Waves';
-import ShinyText from '../components/ShinyText';
+import Grainient from '../components/Grainient';
 import './Hero.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -23,10 +22,6 @@ export default function Hero() {
 
   // Clients Section Refs
   const clientsRef = useRef(null);
-
-  // Video Section Refs
-  const videoSectionRef = useRef(null);
-  const videoWrapperRef = useRef(null);
 
   useEffect(() => {
     // --- Hero Initial Animation ---
@@ -81,30 +76,6 @@ export default function Hero() {
 
 
 
-
-    // --- Video Expansion Animation ---
-    if (videoSectionRef.current && videoWrapperRef.current) {
-      gsap.fromTo(videoWrapperRef.current,
-        {
-          width: '60%',
-          height: '60vh',
-          borderRadius: '32px'
-        },
-        {
-          width: '100vw',
-          height: '100vh',
-          borderRadius: '0px',
-          ease: 'none',
-          scrollTrigger: {
-            trigger: videoSectionRef.current,
-            start: 'top bottom',
-            end: 'center center',
-            scrub: true,
-          }
-        }
-      );
-    }
-
     // --- Amazed Color Change at Footer Bottom ---
     if (amazedRef.current) {
       gsap.to(amazedRef.current, {
@@ -128,72 +99,51 @@ export default function Hero() {
     <div className="hero-page-wrapper">
       {/* 1. Hero Section */}
       <main className="hero relative overflow-hidden flex items-center justify-center" ref={containerRef} style={{ transform: 'perspective(1000px) rotateY(var(--hero-rotation, 0deg))' }}>
-        {/* Waves Background */}
-        <div className="absolute inset-0 z-0 flex items-center justify-center opacity-30 pointer-events-none">
-          <Waves
-            lineColor="#046241"
-            backgroundColor="transparent"
-            waveSpeedX={0.02}
-            waveSpeedY={0.01}
+        {/* Grainient Background */}
+        <div className="absolute inset-0 z-0 pointer-events-none" style={{ width: '100%', height: '100%' }}>
+          <Grainient
+            color1="#ffc370"
+            color2="#133020"
+            color3="#ffb347"
+            timeSpeed={0.25}
+            colorBalance={0}
+            warpStrength={1}
+            warpFrequency={5}
+            warpSpeed={2}
+            warpAmplitude={50}
+            blendAngle={0}
+            blendSoftness={0.05}
+            rotationAmount={500}
+            noiseScale={2}
+            grainAmount={0.1}
+            grainScale={2}
+            grainAnimated={false}
+            contrast={1.5}
+            gamma={1}
+            saturation={1}
+            centerX={0}
+            centerY={0}
+            zoom={0.9}
           />
         </div>
 
         <div className="hero-content relative z-10 text-center">
           <h1 ref={titleRef} className="hero-title">
-            <ShinyText
-              text="The world’s leading provider"
-              disabled={false}
-              speed={3}
-              className="hero-title-shiny"
-              color="#133020"
-              shineColor="#f3f4f6"
-            />
+            <span>The world’s leading provider</span>
             <br />
-            <ShinyText
-              text="of AI-powered data solutions."
-              disabled={false}
-              speed={3}
-              className="hero-title-shiny"
-              color="#133020"
-              shineColor="#f3f4f6"
-            />
+            <span>of AI-powered data solutions.</span>
           </h1>
 
-          <div ref={ctaRef} className="hero-cta mt-8">
-            <Link to="/contact" className="btn btn-primary">
-              Get In Touch
+          <div ref={ctaRef} className="hero-cta mt-8 flex justify-center">
+            <Link to="/contact" style={{ textDecoration: 'none' }}>
+              <button className="custom-signup-btn">
+                Contact Us
+              </button>
             </Link>
           </div>
         </div>
         <div className="hero-bg-decoration pointer-events-none"></div>
       </main>
-
-      {/* 2. About Us Section */}
-      <section ref={aboutRef} className="about-section relative">
-        {/* Background Image Overlay */}
-        <div className="absolute inset-0 z-0 opacity-20 pointer-events-none mix-blend-overlay">
-          <img
-            src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=2072"
-            alt="Background"
-            className="w-full h-full object-cover"
-          />
-        </div>
-
-        <div className="about-container relative z-10 text-center">
-
-          <p ref={aboutTextRef} className="about-text text-xl leading-relaxed max-w-3xl mx-auto">
-            {"We empower our company and our clients to realize the transformative power of AI.".split(" ").map((word, wIndex) => (
-              <span key={wIndex} className="about-word inline-block mr-2">
-                {word.split("").map((char, cIndex) => (
-                  <span key={cIndex} className="about-char inline-block opacity-0">
-                    {char}
-                  </span>
-                ))}
-              </span>
-            ))}
-          </p>
-        </div>
-      </section>
 
       {/* 3. Bento Grid Features Section */}
       <section className="bento-grid-section">
@@ -246,26 +196,6 @@ export default function Hero() {
             </div>
 
           </div>
-        </div>
-      </section>
-
-      {/* Video Embed Section (Scroll Expand) */}
-      <section ref={videoSectionRef} className="video-section relative w-full h-[120vh] flex items-start justify-center overflow-hidden bg-transparent">
-        <div
-          ref={videoWrapperRef}
-          className="video-wrapper relative overflow-hidden shadow-2xl z-20 origin-center"
-          style={{ width: '60%', height: '60vh', borderRadius: '32px' }} // Initial state matches GSAP from
-        >
-          <iframe
-            className="w-full h-full object-cover"
-            src="https://www.youtube.com/embed/Cdn9Q_Qo40E?si=-m6VxhP2JBcEO9Yc&autoplay=1&mute=1&loop=1&playlist=Cdn9Q_Qo40E&controls=0&showinfo=0&rel=0"
-            title="Lifewood AI"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-          ></iframe>
-          {/* Overlay to prevent scroll stealing (optional) */}
-          <div className="absolute inset-0 pointer-events-none"></div>
         </div>
       </section>
 

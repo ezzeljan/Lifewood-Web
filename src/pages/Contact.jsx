@@ -185,13 +185,10 @@ export default function Contact() {
     <main className="contact">
       <section className="contact-section">
         <div className="container">
-          <h1 ref={titleRef} className="section-title">Let's start a conversation</h1>
-          <p className="section-subtitle">We'd love to hear from you.</p>
 
           <div className="contact-content">
             {/* Contact Form */}
             <div className="form-container" ref={formRef}>
-              <h2>Send Us a Message</h2>
               {submitted ? (
                 <div className="success-message">
                   <div className="success-icon">✓</div>
