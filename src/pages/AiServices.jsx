@@ -84,7 +84,7 @@ export default function AiServices() {
       <section className="ai-section" ref={sectionRef} style={{ paddingBottom: '0' }}>
         <div className="container">
           <h1 ref={titleRef} className="section-title" style={{ textAlign: 'left' }}>AI Data Services</h1>
-          <p className="section-subtitle" style={{ marginBottom: '2rem', textAlign: 'left', fontSize: '1rem' }}>Lifewood delivers end-to-end AI data solutions—from multi-language data collection and annotation to model training and generative AI content. Leveraging our global workforce, industrialized methodology, and proprietary LiFT platform, we enable organizations to scale efficiently, reduce costs, and accelerate decision-making with high-quality, domain-specific datasets.</p>
+          <p className="section-subtitle" style={{ marginBottom: '2rem', textAlign: 'left', fontSize: '1rem', color: 'black' }}>Lifewood delivers end-to-end AI data solutions—from multi-language data collection and annotation to model training and generative AI content. Leveraging our global workforce, industrialized methodology, and proprietary LiFT platform, we enable organizations to scale efficiently, reduce costs, and accelerate decision-making with high-quality, domain-specific datasets.</p>
         </div>
       </section>
 
