@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import Grainient from '../components/Grainient';
 import './Contact.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -84,26 +85,11 @@ export default function Contact() {
         );
       });
 
-      // Add focus animations to inputs
+      // Ensure inputs are visible
       const inputs = formRef.current?.querySelectorAll('input, textarea');
       inputs?.forEach((input) => {
         input.style.opacity = '1';
         input.style.visibility = 'visible';
-        input.addEventListener('focus', () => {
-          gsap.to(input, {
-            scale: 1.02,
-            duration: 0.3,
-            ease: 'power2.out'
-          });
-        });
-
-        input.addEventListener('blur', () => {
-          gsap.to(input, {
-            scale: 1,
-            duration: 0.3,
-            ease: 'power2.out'
-          });
-        });
       });
     } catch (error) {
       console.warn('Animation setup error:', error);
@@ -126,18 +112,6 @@ export default function Contact() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // Animate submit button
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    gsap.timeline()
-      .to(submitBtn, {
-        scale: 0.95,
-        duration: 0.1
-      })
-      .to(submitBtn, {
-        scale: 1,
-        duration: 0.1
-      });
 
     // Show success message
     setSubmitted(true);
@@ -187,7 +161,39 @@ export default function Contact() {
         <div className="container">
 
           <div className="contact-content">
-            {/* Contact Form */}
+            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
+              <Grainient
+                color1="#ffb347"
+                color2="#ffffff"
+                color3="#133020"
+                timeSpeed={0.25}
+                colorBalance={0.15}
+                warpStrength={1}
+                warpFrequency={5}
+                warpSpeed={2}
+                warpAmplitude={50}
+                blendAngle={0}
+                blendSoftness={0.05}
+                rotationAmount={500}
+                noiseScale={2}
+                grainAmount={0}
+                grainScale={2}
+                grainAnimated={false}
+                contrast={1.4}
+                gamma={1}
+                saturation={1}
+                centerX={0}
+                centerY={0}
+                zoom={0.9}
+              />
+            </div>
+
+            {/* Text Column */}
+            <div className="contact-text-container">
+              <h2>Let's Connect <br></br>And Talk</h2>
+            </div>
+
+            {/* Contact Form Column */}
             <div className="form-container" ref={formRef}>
               {submitted ? (
                 <div className="success-message">
@@ -244,7 +250,7 @@ export default function Contact() {
                       value={formData.message}
                       onChange={handleChange}
                       placeholder="Your message here..."
-                      rows="5"
+                      rows="4"
                       required
                     ></textarea>
                   </div>
@@ -259,6 +265,6 @@ export default function Contact() {
           </div>
         </div>
       </section>
-    </main>
+    </main >
   );
 }

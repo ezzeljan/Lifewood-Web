@@ -65,6 +65,7 @@ export default function Navigation() {
           className="menu-toggle"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-label="Toggle menu"
+          aria-expanded={isMenuOpen}
         >
           <span></span>
           <span></span>
@@ -80,7 +81,11 @@ export default function Navigation() {
               onMouseLeave={() => link.children && setActiveDropdown(null)}
             >
               {link.children ? (
-                <span className={`nav-link ${isItemActive(link) ? 'active' : ''}`} style={{ cursor: 'default' }}>
+                <span
+                  className={`nav-link ${isItemActive(link) ? 'active' : ''}`}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setActiveDropdown(activeDropdown === index ? null : index)}
+                >
                   {link.label}
                   {link.children && <ChevronDown size={14} className="ml-1" strokeWidth={2.5} />}
                 </span>

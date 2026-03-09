@@ -67,8 +67,8 @@ export default function ServicesSection() {
         <section ref={sectionRef} className="w-full bg-white py-20">
             <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="mb-12">
-                    <h1 className="text-6xl font-light text-[#133020] mb-4">AI Data Services</h1>
-                    <p className="text-[#046241] text-lg">
+                    <h1 className="text-6xl font-light text-[#000000] mb-4">AI Data Services</h1>
+                    <p className="text-[#046241] text-base">
                         Lifewood offers AI and IT services that enhance decision-making, reduce costs, and improve productivity to optimize organizational performance.
                     </p>
                 </div>
@@ -106,7 +106,7 @@ export default function ServicesSection() {
 
                                     {/* Description & Link - Hidden initially, reveals on hover */}
                                     <div className="flex-1 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 delay-100 flex flex-col justify-center h-full">
-                                        <p className="text-white/90 text-lg max-w-2xl mb-6">
+                                        <p className="text-white/90 text-base max-w-2xl mb-6">
                                             {service.description}
                                         </p>
                                         <a href="/ai-services" className="inline-flex items-center text-white font-semibold hover:underline">

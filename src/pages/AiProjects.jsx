@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ArrowRight, Brain, Cpu, Database, Eye, Globe, Layers, Zap, Car, MessageSquare, Mic, Scroll } from 'lucide-react';
+import { ArrowRight, Brain, Cpu, Database, Eye, Globe, Layers, Zap, Car, MessageSquare, Mic, Scroll, ChevronLeft, ChevronRight } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -124,7 +124,7 @@ const aiServices = [
 ];
 
 export default function AiProjects() {
-  const [activeId, setActiveId] = useState('03'); // Default active card
+  const [expandedId, setExpandedId] = useState(null);
   const containerRef = useRef(null);
   const titleRef = useRef(null);
 
@@ -160,107 +160,138 @@ export default function AiProjects() {
     );
   }, []);
 
+  const scrollContainer = (direction) => {
+    if (containerRef.current) {
+      const scrollAmount = window.innerWidth > 768 ? 400 : 300;
+      containerRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   return (
     <div className="bg-gradient-to-b from-white to-[#F9F7F7] text-[#133020] py-24 min-h-screen overflow-hidden">
-      <div className="container mx-auto px-4 mb-16">
-        <div className="mb-20 text-left">
+      <div className="container mx-auto px-4 mb-2 text-center md:text-left">
+        <div className="mb-16">
           <h1 ref={titleRef} className="text-5xl md:text-6xl font-bold text-[#133020] mb-6">
             AI Projects
           </h1>
-          <p className="text-base text-[#133020]/70 font-light leading-relaxed">
-            From building AI datasets in diverse languages and environments, to developing platforms that enhance productivity and open new opportunities in under-resourced economies, you’ll see how Lifewood is shaping the future  with innovation, integrity and a focus on people.
+          <p className="text-base text-[#133020]/70 font-light leading-relaxed max-w-4xl mx-auto md:mx-0">
+            From building AI datasets in diverse languages and environments, to developing platforms that enhance productivity and open new opportunities in under-resourced economies, you’ll see how Lifewood is shaping the future with innovation, integrity and a focus on people.
           </p>
         </div>
 
-        <div className="flex flex-col items-center text-center">
-          <p className="inline-block text-sm font-bold tracking-wider text-white bg-[#133020] rounded-full px-4 py-1.5 mb-4">
-            Projects
-          </p>
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6 text-[#046241]">
-            What we currently handle
-          </h2>
+        <div className="flex flex-col md:flex-row items-center md:items-end justify-between mb-8 md:mb-12 gap-6">
+          <div className="flex flex-col items-center md:items-start text-center md:text-left">
+            <p className="inline-block text-sm font-bold tracking-wider text-[#133020] bg-black/5 rounded-full px-4 py-1.5 mb-4">
+              Projects
+            </p>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-[#133020]">
+              What we currently handle
+            </h2>
+          </div>
+
+          {/* Navigation Arrows */}
+          <div className="flex gap-4 items-center">
+            <button
+              onClick={() => scrollContainer('left')}
+              className="w-12 h-12 bg-white text-[#133020] rounded-full flex items-center justify-center shadow-md hover:shadow-lg hover:-translate-y-1 hover:bg-[#CCFF00] transition-all duration-300 border border-gray-100"
+              aria-label="Scroll left"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <button
+              onClick={() => scrollContainer('right')}
+              className="w-12 h-12 bg-white text-[#133020] rounded-full flex items-center justify-center shadow-md hover:shadow-lg hover:-translate-y-1 hover:bg-[#CCFF00] transition-all duration-300 border border-gray-100"
+              aria-label="Scroll right"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          </div>
         </div>
       </div>
 
-      <div
-        ref={containerRef}
-        className="flex flex-col md:flex-row h-[600px] w-full px-2 gap-2"
-      >
-        {aiServices.map((service) => {
-          const isActive = activeId === service.id;
+      <div className="container mx-auto relative mt-4 group/slider">
+        <style dangerouslySetInnerHTML={{
+          __html: `
+          .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+          .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        `}} />
 
-          return (
-            <div
-              key={service.id}
-              onClick={() => setActiveId(service.id)}
-              className={`
-                relative h-[200px] md:h-full rounded-[24px] overflow-hidden cursor-pointer
-                border border-[#133020]/20
-                transition-[flex-grow,width,opacity,transform,background-color] duration-700 ease-[cubic-bezier(0.25,1,0.5,1)]
-                ${isActive ? 'flex-[10] md:flex-[4] shadow-2xl scale-[1.01]' : 'flex-[2] md:flex-[0.5]'}
-                group shadow-lg
-              `}
-              style={{
-                background: service.image,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center'
-              }}
-            >
-              {/* Overlay for depth (only on inactive images) */}
-              {!isActive && (
-                <div className={`absolute inset-0 bg-black/20 transition-colors duration-500 pointer-events-none`} />
-              )}
+        <div
+          ref={containerRef}
+          className="flex overflow-x-auto pb-16 pt-4 px-4 gap-4 md:gap-5 snap-x snap-mandatory w-full hide-scrollbar scroll-smooth"
+        >
+          {aiServices.map((service, index) => {
+            const isExpanded = expandedId === service.id;
+            const isHighlighted = isExpanded;
 
-              {/* Active State Gradient Overlay */}
+            return (
               <div
-                className={`absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20 transition-opacity duration-700 ${isActive ? 'opacity-100' : 'opacity-0'}`}
-              />
-
-              {/* Number (Only visible when active) */}
-              {isActive && (
-                <div className="absolute bottom-8 left-8 z-20">
-                  <span className={`text-xl font-mono ${service.textColor} opacity-50`}>
-                    {service.id}
-                  </span>
-                </div>
-              )}
-
-              {/* Active Content */}
-              <div
+                key={service.id}
                 className={`
-                  absolute top-0 left-0 w-full p-8 md:p-12 z-20 flex flex-col justify-start
-                  transition-all duration-700 delay-100
-                  ${isActive ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-12 pointer-events-none'}
+                  flex-shrink-0 flex flex-col h-[600px] rounded-[32px] hide-scrollbar
+                  ${isExpanded ? 'w-[92vw] sm:w-[500px] lg:w-[calc(40vw-1.5rem)] min-w-[340px] max-w-[600px] shadow-2xl scale-[1.01] overflow-y-auto' : 'w-[85vw] sm:w-[360px] lg:w-[calc(25vw-1.5rem)] min-w-[320px] max-w-[420px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] overflow-hidden'}
+                  ${isHighlighted ? 'bg-[#CCFF00]' : 'bg-white'} 
+                  transition-all duration-700 relative group snap-center md:snap-start
                 `}
               >
-                {/* Icon & Category */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`p-2 rounded-lg bg-white/10`}>
-                    {/* Clone element to force color inheritance if needed, or just standard text color */}
-                    <div className={service.textColor}>{service.icon}</div>
+                {/* Content Area */}
+                <div className={`p-6 md:p-8 flex-1 flex flex-col relative z-10 transition-all duration-700 ${isExpanded ? 'pb-2' : ''}`}>
+                  {/* Pill Tag */}
+                  <div className="flex items-start mb-6">
+                    <div className={`inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase ${isHighlighted ? 'bg-[#133020]/10 text-[#133020]' : 'bg-[#F9F7F7] text-[#133020]'}`}>
+                      <div className="[&>svg]:w-4 [&>svg]:h-4">
+                        {service.icon}
+                      </div>
+                      <span>{service.category}</span>
+                    </div>
                   </div>
-                  <span className={`text-sm font-bold uppercase tracking-wider ${service.textColor} opacity-80`}>
-                    {service.category}
-                  </span>
+
+                  {/* Title */}
+                  <h3 className={`text-2xl font-bold mb-3 leading-tight ${isHighlighted ? 'text-[#133020]' : 'text-[#133020]'}`}>
+                    {service.title}
+                  </h3>
+
+                  {/* Description with fading effect */}
+                  <div className={`relative transition-all duration-700 ${isExpanded ? 'h-auto pb-6' : 'h-[12rem] overflow-hidden mb-2 opacity-100'}`}>
+                    <div className={`text-base leading-relaxed font-light ${isExpanded ? '' : 'line-clamp-[8]'} ${isHighlighted ? 'text-[#133020]/80' : 'text-[#133020]/70'}`}>
+                      {service.description}
+                    </div>
+                    {!isExpanded && (
+                      <div className={`absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t ${isHighlighted ? 'from-[#CCFF00]' : 'from-white'} via-${isHighlighted ? '[#CCFF00]/80' : 'white/80'} to-transparent`} />
+                    )}
+                  </div>
                 </div>
 
-                {/* Headline */}
-                <h2 className={`text-2xl md:text-4xl font-bold leading-tight mb-4 ${service.textColor}`}>
-                  {service.title}
-                </h2>
+                {/* Image Area */}
+                <div className="relative h-[280px] w-full rounded-t-[32px] overflow-hidden mt-auto flex-shrink-0">
+                  <div
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+                    style={{ backgroundImage: service.image }}
+                  />
+                  <div className="absolute inset-0 bg-[#133020]/5 group-hover:bg-transparent transition-colors duration-300" />
 
-                {/* Description */}
-                <div className={`text-base md:text-lg text-gray-300 max-w-3xl font-light leading-relaxed mb-6`}>
-                  {service.description}
+                  {/* Circular Arrow Button */}
+                  <div
+                    onClick={() => setExpandedId(isExpanded ? null : service.id)}
+                    className={`absolute left-1/2 -translate-x-1/2 w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-500 hover:-translate-y-1 hover:shadow-xl cursor-pointer z-10 ${isExpanded ? 'bg-[#CCFF00] text-[#133020] hover:bg-[#bbe600] bottom-6' : 'bg-white text-[#133020] hover:bg-gray-50 bottom-6'}`}
+                    aria-label={isExpanded ? "Collapse details" : "Expand details"}
+                  >
+                    <ArrowRight className={`w-6 h-6 transition-transform duration-500 ${isExpanded ? 'rotate-180' : '-rotate-45 group-hover:rotate-0'}`} />
+                  </div>
                 </div>
-
-
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
 }
-

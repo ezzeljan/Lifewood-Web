@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import ServicesSection from '../components/ServicesSection';
 import Clients from './Clients';
 import Grainient from '../components/Grainient';
+import GlassSurface from '../components/GlassSurface';
 import './Hero.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -102,11 +103,11 @@ export default function Hero() {
         {/* Grainient Background */}
         <div className="absolute inset-0 z-0 pointer-events-none" style={{ width: '100%', height: '100%' }}>
           <Grainient
-            color1="#ffc370"
-            color2="#133020"
-            color3="#ffb347"
+            color1="#ffb347"
+            color2="#ffffff"
+            color3="#133020"
             timeSpeed={0.25}
-            colorBalance={0}
+            colorBalance={0.15}
             warpStrength={1}
             warpFrequency={5}
             warpSpeed={2}
@@ -115,10 +116,10 @@ export default function Hero() {
             blendSoftness={0.05}
             rotationAmount={500}
             noiseScale={2}
-            grainAmount={0.1}
+            grainAmount={0}
             grainScale={2}
             grainAnimated={false}
-            contrast={1.5}
+            contrast={1.4}
             gamma={1}
             saturation={1}
             centerX={0}
@@ -128,73 +129,128 @@ export default function Hero() {
         </div>
 
         <div className="hero-content relative z-10 text-center">
-          <h1 ref={titleRef} className="hero-title">
+          <h1 ref={titleRef} className="hero-title text-black">
             <span>The world’s leading provider</span>
             <br />
             <span>of AI-powered data solutions.</span>
           </h1>
 
-          <div ref={ctaRef} className="hero-cta mt-8 flex justify-center">
-            <Link to="/contact" style={{ textDecoration: 'none' }}>
-              <button className="custom-signup-btn">
-                Contact Us
-              </button>
+          <div ref={ctaRef} className="hero-cta mt-8 flex justify-center gap-4">
+            <Link to="/contact" className="button1" style={{ textDecoration: 'none' }}>
+
+              Contact Us
+            </Link>
+            <Link to="/about" className="button1" style={{ textDecoration: 'none' }}>
+              <span className="button1__icon-wrapper">
+                <svg viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="button1__icon-svg" width={10}>
+                  <path d="M13.376 11.552l-.264-10.44-10.44-.24.024 2.28 6.96-.048L.2 12.56l1.488 1.488 9.432-9.432-.048 6.912 2.304.024z" fill="currentColor" />
+                </svg>
+                <svg viewBox="0 0 14 15" fill="none" width={10} xmlns="http://www.w3.org/2000/svg" className="button1__icon-svg button1__icon-svg--copy">
+                  <path d="M13.376 11.552l-.264-10.44-10.44-.24.024 2.28 6.96-.048L.2 12.56l1.488 1.488 9.432-9.432-.048 6.912 2.304.024z" fill="currentColor" />
+                </svg>
+              </span>
+              Learn More
             </Link>
           </div>
         </div>
         <div className="hero-bg-decoration pointer-events-none"></div>
       </main>
 
-      {/* 3. Bento Grid Features Section */}
-      <section className="bento-grid-section">
-        <h2 className="bento-title">Built for Global Scale</h2>
-        <div className="bento-grid-container">
-          <div className="bento-card card-primary">
-            <div className="bento-card-content">
-              <div className="bento-stat">
-                <span className="bento-number">40</span>
-                <span className="bento-symbol">+</span>
-              </div>
-              <h3 className="bento-label">Global Delivery Centers</h3>
-              <p className="bento-caption">Lifewood operates 40+ secure delivery centers worldwide, providing the backbone for AI data operations. These hubs ensure sensitive data is processed in controlled environments, with industrialized workflows and strict compliance standards across all regions.</p>
-            </div>
-
+      {/* About Us Two-Column Grid */}
+      <section className="max-w-7xl mx-auto px-6 md:px-12 py-20 grid grid-cols-1 md:grid-cols-12 gap-12 items-start">
+        <div className="flex flex-col items-start justify-start gap-6 md:col-span-4">
+          <div className="border border-gray-400 rounded-full px-4 py-1.5 bg-transparent">
+            <span className="text-xs font-medium tracking-wider text-gray-900">About Us</span>
           </div>
 
-          <div className="bento-card card-secondary">
-            <div className="bento-card-content">
-              <div className="bento-stat">
-                <span className="bento-number">30</span>
-                <span className="bento-symbol">+</span>
-              </div>
-              <h3 className="bento-label">Countries Across All Continents</h3>
-              <p className="bento-caption">Lifewood’s global footprint spans 30+ countries and 40+ centers, including extensive operations in Africa, Asia, Europe, and the Americas, enabling region-specific datasets that reflect cultural and linguistic diversity.</p>
-            </div>
+        </div>
+        <div className="md:col-span-8">
+          <p className="text-xl md:text-2xl leading-relaxed text-gray-800 font-extralight mb-8">
+            At Lifewood we empower our company and our clients to realize the transformative power of Al: bringing big data to life: launching new ways of thinking, learning and doing; for the good of humankind.
+          </p>
+          <Link to="/about" className="button1" style={{ textDecoration: 'none' }}>
+            <span className="button1__icon-wrapper">
+              <svg viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="button1__icon-svg" width={10}>
+                <path d="M13.376 11.552l-.264-10.44-10.44-.24.024 2.28 6.96-.048L.2 12.56l1.488 1.488 9.432-9.432-.048 6.912 2.304.024z" fill="currentColor" />
+              </svg>
+              <svg viewBox="0 0 14 15" fill="none" width={10} xmlns="http://www.w3.org/2000/svg" className="button1__icon-svg button1__icon-svg--copy">
+                <path d="M13.376 11.552l-.264-10.44-10.44-.24.024 2.28 6.96-.048L.2 12.56l1.488 1.488 9.432-9.432-.048 6.912 2.304.024z" fill="currentColor" />
+              </svg>
+            </span>
+            Know Us Better
+          </Link>
+        </div>
+      </section>
 
+      {/* 3. Features Row Section */}
+      <section className="features-row-section">
+        <div className="features-row-grid">
+          <div className="feature-card">
+            <img
+              src="https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=800&auto=format&fit=crop"
+              alt="Global Delivery Centers"
+              className="feature-card-bg"
+            />
+            <div className="feature-card-overlay"></div>
+            <div className="feature-card-content">
+              <div className="feature-stat">
+                <span className="feature-number">40</span>
+                <span className="feature-symbol">+</span>
+              </div>
+              <h3 className="feature-label">Global Delivery Centers</h3>
+              <p className="feature-caption">Lifewood operates 40+ secure delivery centers worldwide, providing the backbone for AI data operations.</p>
+            </div>
           </div>
 
-          <div className="bento-card card-secondary">
-            <div className="bento-card-content">
-              <div className="bento-stat">
-                <span className="bento-number">50</span>
-                <span className="bento-symbol">+</span>
+          <div className="feature-card">
+            <img
+              src="https://images.unsplash.com/photo-1526772662000-3f88f10405ff?q=80&w=800&auto=format&fit=crop"
+              alt="Global Footprint"
+              className="feature-card-bg"
+            />
+            <div className="feature-card-overlay"></div>
+            <div className="feature-card-content">
+              <div className="feature-stat">
+                <span className="feature-number">30</span>
+                <span className="feature-symbol">+</span>
               </div>
-              <h3 className="bento-label">Language Capabilities and Dialects</h3>
-              <p className="bento-caption">Lifewood provides data services in 50+ languages and dialects, building diverse multilingual datasets for LLMs, voice AI, and enterprise applications.</p>
+              <h3 className="feature-label">Global Footprint</h3>
+              <p className="feature-caption">Lifewood’s footprint spans 30+ countries including extensive operations in Africa, Asia, Europe, and the Americas.</p>
             </div>
-
           </div>
 
-          <div className="bento-card card-wide">
-            <div className="bento-card-content">
-              <div className="bento-stat">
-                <span className="bento-number">56,000</span>
-                <span className="bento-symbol">+</span>
+          <div className="feature-card">
+            <img
+              src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=800&auto=format&fit=crop"
+              alt="Language Capabilities"
+              className="feature-card-bg"
+            />
+            <div className="feature-card-overlay"></div>
+            <div className="feature-card-content">
+              <div className="feature-stat">
+                <span className="feature-number">50</span>
+                <span className="feature-symbol">+</span>
               </div>
-              <h3 className="bento-label">Global Online Resources</h3>
-              <p className="bento-caption">With 56,788 online specialists worldwide, Lifewood mobilizes a flexible workforce for scalable data collection, annotation, and quality assurance, operating 24/7 across regions.</p>
+              <h3 className="feature-label">Language Capabilities</h3>
+              <p className="feature-caption">Lifewood provides data services in 50+ languages and dialects, building diverse multilingual datasets for LLMs.</p>
             </div>
+          </div>
 
+          <div className="feature-card">
+            <img
+              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=800&auto=format&fit=crop"
+              alt="Global Online Resources"
+              className="feature-card-bg"
+            />
+            <div className="feature-card-overlay"></div>
+            <div className="feature-card-content">
+              <div className="feature-stat">
+                <span className="feature-number">56k</span>
+                <span className="feature-symbol">+</span>
+              </div>
+              <h3 className="feature-label">Global Online Resources</h3>
+              <p className="feature-caption">With 56,788 online specialists worldwide, Lifewood mobilizes a flexible workforce for scalable data collection.</p>
+            </div>
           </div>
         </div>
       </section>
