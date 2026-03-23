@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Swiper, SwiperSlide, useSwiperSlide } from 'swiper/react';
@@ -16,13 +17,14 @@ import event1 from '../assets/careers/company_event_1_1771797330736.png';
 import meeting1 from '../assets/careers/team_meeting_1_1771797346663.png';
 import culture1 from '../assets/careers/office_culture_1_1771797368830.png';
 import tech1 from '../assets/careers/tech_collaboration_1_1771797385702.png';
+import joinUsBg from '../assets/careers/join-us-bg.png';
 import Masonry from '../components/Masonry';
 
 import './Careers.css';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const JobCard = ({ job, image, index }) => {
+const JobCard = ({ job, image, index, onApply }) => {
   const swiperSlide = useSwiperSlide();
   const [isFlipped, setIsFlipped] = useState(false);
 
@@ -84,7 +86,7 @@ const JobCard = ({ job, image, index }) => {
               onMouseOut={(e) => e.target.style.backgroundColor = buttonBg}
               onClick={(e) => {
                 e.stopPropagation(); // Prevent flip when clicking button
-                alert(`Applying for ${job.title}`);
+                onApply(job.title);
               }}
             >
               Apply Now
@@ -97,6 +99,7 @@ const JobCard = ({ job, image, index }) => {
 };
 
 export default function Careers() {
+  const navigate = useNavigate();
 
   const jobs = [
     {
@@ -156,6 +159,10 @@ export default function Careers() {
     { id: 6, img: tech1, height: 550 },
   ];
 
+  const handleApply = (jobTitle) => {
+    navigate(`/apply?position=${encodeURIComponent(jobTitle)}`);
+  };
+
   return (
     <main className="careers relative overflow-hidden">
       <section className="careers-section">
@@ -187,7 +194,7 @@ export default function Careers() {
             >
               {jobs.map((job, index) => (
                 <SwiperSlide key={index}>
-                  <JobCard job={job} image={job.image} index={index} />
+                  <JobCard job={job} image={job.image} index={index} onApply={handleApply} />
                 </SwiperSlide>
               ))}
             </Swiper>
@@ -221,10 +228,15 @@ export default function Careers() {
           </section>
 
           {/* CTA Section */}
-          <section className="careers-cta">
-            <h2>Don't see the right role?</h2>
-            <p>Send us your resume and tell us what you're interested in.</p>
-            <button className="btn btn-primary">Send Your Resume</button>
+          <section className="careers-cta" style={{ backgroundImage: `url(${joinUsBg})` }}>
+            <div className="cta-overlay"></div>
+            <div className="cta-content">
+              <h2>Ready to grow with us?</h2>
+              <p>Join a team of innovators and push the boundaries of what's possible in the world of AI data.</p>
+              <button className="btn btn-primary" onClick={() => navigate('/apply')}>
+                Join Us
+              </button>
+            </div>
           </section>
         </div>
       </section>

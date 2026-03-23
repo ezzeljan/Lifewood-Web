@@ -182,6 +182,7 @@ Comprehensive documentation files included:
 1. **WEBSITE_DOCUMENTATION.md** - Complete feature breakdown
 2. **ANIMATION_GUIDE.md** - GSAP animation reference
 3. **DEVELOPER_GUIDE.md** - Code examples and extensions
+4. **FIREBASE_SETUP.md** - Backend/admin setup and deployment steps
 
 ---
 

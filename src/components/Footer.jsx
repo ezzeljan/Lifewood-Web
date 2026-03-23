@@ -30,7 +30,7 @@ export default function Footer() {
           <div className="footer-section footer-brand">
             <Link to="/" className="footer-logo">
               <img src={logo} alt="Lifewood" className="footer-logo-img" />
-              <span className="footer-logo-text">Lifewood</span>
+              <span className="footer-logo-text"></span>
             </Link>
             <p className="footer-tagline">
               Empowering companies with transformative AI solutions.

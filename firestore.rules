@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Admin list: set in Console. Only used in rules (no client read needed).
+    match /config/admins {
+      allow read, write: if false;
+    }
+    // Applications: anyone can create; only admins can read/update/delete.
+    match /applications/{appId} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null;
+    }
+    // Messages: anyone can create; only admins can read.
+    match /messages/{msgId} {
+      allow create: if true;
+      allow read: if request.auth != null;
+      allow update, delete: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

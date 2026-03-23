@@ -1,0 +1,86 @@
+.apply-page {
+  min-height: 100vh;
+  padding-top: 7rem;
+  background: #f6f8f9;
+}
+
+.apply-section {
+  padding: 2rem 0 4rem;
+}
+
+.apply-header {
+  margin-bottom: 1.5rem;
+}
+
+.apply-header h1 {
+  color: #133020;
+  margin-bottom: 0.5rem;
+}
+
+.apply-header p {
+  color: #4b5563;
+}
+
+.apply-form {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  padding: 1.25rem;
+}
+
+.apply-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.apply-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.apply-form label {
+  font-weight: 600;
+  color: #133020;
+}
+
+.apply-form input,
+.apply-form select,
+.apply-form textarea {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.95rem;
+}
+
+.apply-form input:focus,
+.apply-form select:focus,
+.apply-form textarea:focus {
+  outline: 2px solid rgba(4, 98, 65, 0.25);
+  border-color: #046241;
+}
+
+.apply-message {
+  margin-top: 1rem;
+  font-weight: 600;
+}
+
+.apply-message.success {
+  color: #046241;
+}
+
+.apply-message.error {
+  color: #b91c1c;
+}
+
+@media (max-width: 768px) {
+  .apply-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .apply-form {
+    padding: 1rem;
+  }
+}

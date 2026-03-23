@@ -12,14 +12,18 @@ import Offices from './pages/Offices';
 import Philanthropy from './pages/Philanthropy';
 import Careers from './pages/Careers';
 import Contact from './pages/Contact';
+import Apply from './pages/Apply';
+import Admin from './pages/Admin';
 import './styles/global.css';
 import './App.css';
 
-// Page Transition Component
 function PageTransition({ children }) {
   const location = useLocation();
 
   useEffect(() => {
+    import('gsap/ScrollTrigger').then(({ ScrollTrigger }) => {
+      ScrollTrigger.getAll().forEach(t => t.kill());
+    });
     window.scrollTo(0, 0);
   }, [location]);
 
@@ -39,16 +43,31 @@ function AppRoutes() {
       <Route path="/philanthropy" element={<PageTransition><Philanthropy /></PageTransition>} />
       <Route path="/careers" element={<PageTransition><Careers /></PageTransition>} />
       <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
+      <Route path="/apply" element={<PageTransition><Apply /></PageTransition>} />
+      <Route path="/admin" element={<PageTransition><Admin /></PageTransition>} />
     </Routes>
+  );
+}
+
+function Layout({ children }) {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
+  return (
+    <>
+      {!isAdminRoute && <Navigation />}
+      {children}
+      {!isAdminRoute && <Footer />}
+    </>
   );
 }
 
 export default function App() {
   return (
     <Router>
-      <Navigation />
-      <AppRoutes />
-      <Footer />
+      <Layout>
+        <AppRoutes />
+      </Layout>
     </Router>
   );
 }

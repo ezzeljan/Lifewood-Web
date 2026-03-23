@@ -7,6 +7,9 @@ import './Navigation.css';
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [isMobileView, setIsMobileView] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth <= 992 : false
+  );
   const menuRef = useRef(null);
   const location = useLocation();
 
@@ -47,53 +50,102 @@ export default function Navigation() {
   ];
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 992px)');
+    const handleViewportChange = (event) => {
+      const mobile = event.matches;
+      setIsMobileView(mobile);
+      if (!mobile) {
+        setIsMenuOpen(false);
+        setActiveDropdown(null);
+      }
+    };
+
+    setIsMobileView(mediaQuery.matches);
+    mediaQuery.addEventListener('change', handleViewportChange);
+    return () => mediaQuery.removeEventListener('change', handleViewportChange);
+  }, []);
+
+  useEffect(() => {
+    setIsMenuOpen(false);
+    setActiveDropdown(null);
+    // Close navigation overlays on route change.
+  }, [location.pathname]);
+
+  useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         setIsMenuOpen(false);
         setActiveDropdown(null);
       }
     };
+
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, []);
+
+  useEffect(() => {
+    if (!isMobileView) return;
+
+    document.body.style.overflow = isMenuOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMenuOpen, isMobileView]);
 
   return (
     <nav className="navbar">
       <div className="nav-container" ref={menuRef}>
 
         <button
-          className="menu-toggle"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className={`menu-toggle ${isMenuOpen ? 'active' : ''}`}
+          onClick={() => {
+            setIsMenuOpen((prev) => !prev);
+            setActiveDropdown(null);
+          }}
           aria-label="Toggle menu"
           aria-expanded={isMenuOpen}
+          aria-controls="primary-navigation"
         >
           <span></span>
           <span></span>
           <span></span>
         </button>
 
-        <ul className={`nav-menu ${isMenuOpen ? 'active' : ''}`}>
+        <ul id="primary-navigation" className={`nav-menu ${isMenuOpen ? 'active' : ''}`}>
           {navLinks.map((link, index) => (
             <li
               key={link.path}
               className={`nav-item ${link.children ? 'has-dropdown' : ''}`}
-              onMouseEnter={() => link.children && setActiveDropdown(index)}
-              onMouseLeave={() => link.children && setActiveDropdown(null)}
+              onMouseEnter={() => {
+                if (!isMobileView && link.children) setActiveDropdown(index);
+              }}
+              onMouseLeave={() => {
+                if (!isMobileView && link.children) setActiveDropdown(null);
+              }}
             >
               {link.children ? (
-                <span
+                <button
+                  type="button"
                   className={`nav-link ${isItemActive(link) ? 'active' : ''}`}
-                  style={{ cursor: 'pointer' }}
                   onClick={() => setActiveDropdown(activeDropdown === index ? null : index)}
+                  aria-expanded={activeDropdown === index}
+                  aria-haspopup="true"
                 >
                   {link.label}
                   {link.children && <ChevronDown size={14} className="ml-1" strokeWidth={2.5} />}
-                </span>
+                </button>
               ) : (
                 <Link
                   to={link.path}
                   className={`nav-link ${isItemActive(link) ? 'active' : ''}`}
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setActiveDropdown(null);
+                  }}
                 >
                   {link.label}
                   {link.children && <ChevronDown size={14} className="ml-1" strokeWidth={2.5} />}
@@ -127,10 +179,6 @@ export default function Navigation() {
         <Link to="/" className="nav-logo-link">
           <img src={logo} alt="Lifewood Logo" className="nav-logo-img" />
         </Link>
-      </div>
-
-      <div className="navbar-cta-container">
-        <Link to="/contact" className="nav-cta-btn">Get in Touch</Link>
       </div>
     </nav>
   );
