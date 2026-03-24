@@ -2,29 +2,12 @@
 .contact {
   background: #ffffff;
   width: 100%;
+  min-height: 100vh;
 }
 
 .contact-section {
   padding: 5rem 2rem;
   margin-top: 70px;
-}
-
-.contact-section .section-title {
-  font-size: 3rem;
-  text-align: left;
-  margin-bottom: 1rem;
-  color: #133020;
-  opacity: 1;
-  visibility: visible;
-}
-
-.contact-section .section-subtitle {
-  text-align: left;
-  margin-bottom: 4rem;
-  font-size: 1.25rem;
-  color: #4b5563;
-  opacity: 1;
-  visibility: visible;
 }
 
 /* Contact Card Main Layout */
@@ -120,6 +103,7 @@
   font-weight: 600;
   color: #1a202c;
   font-size: 0.95rem;
+  margin-left: 0.25rem;
 }
 
 .form-group input,
@@ -144,23 +128,19 @@
   transform: translateY(-1px);
 }
 
-.form-group input::placeholder,
-.form-group textarea::placeholder {
-  color: #64748b;
-}
-
 .btn-primary {
   background-color: #FFB347;
   color: #133020;
   border: none;
-  border-radius: 12px;
-  padding: 1rem 2rem;
-  font-weight: 700;
-  font-size: 1.05rem;
+  border-radius: 14px;
+  padding: 1.1rem 2rem;
+  font-weight: 800;
+  font-size: 1rem;
   box-shadow: 0 4px 14px rgba(255, 179, 71, 0.2);
   transition: all 0.3s ease;
   cursor: pointer;
   width: 100%;
+  margin-top: 1rem;
 }
 
 .btn-primary:hover {
@@ -181,6 +161,7 @@
   margin-top: 0.75rem;
   text-align: center;
   font-weight: 500;
+  font-size: 0.9rem;
 }
 
 /* Responsive Design */
@@ -213,9 +194,4 @@
   .visual-content h2 {
     font-size: 2.25rem;
   }
-
-  .visual-content p {
-    font-size: 1.1rem;
-  }
 }
-

@@ -1,18 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Grainient from '../components/Grainient';
-import { submitContactMessage } from '../lib/api';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { IoCheckmarkCircleOutline, IoCloseOutline } from 'react-icons/io5';
+import Grainient from '../components/Grainient';
+import { submitContactMessage } from '../lib/api';
 import './Contact.css';
 
-gsap.registerPlugin(ScrollTrigger);
-
 export default function Contact() {
-  const titleRef = useRef(null);
-  const formRef = useRef(null);
-  const contactInfoRef = useRef([]);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -22,45 +15,6 @@ export default function Contact() {
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
-
-  useEffect(() => {
-    try {
-      // Ensure all elements are visible
-      if (titleRef.current) {
-        titleRef.current.style.opacity = '1';
-        titleRef.current.style.visibility = 'visible';
-      }
-      if (formRef.current) {
-        formRef.current.style.opacity = '1';
-        formRef.current.style.visibility = 'visible';
-      }
-
-      // Animate form
-      gsap.fromTo(formRef.current,
-        { opacity: 0, x: 50 },
-        {
-          scrollTrigger: {
-            trigger: formRef.current,
-            start: 'top 80%',
-          },
-          opacity: 1,
-          x: 0,
-          duration: 0.8,
-          ease: 'power3.out'
-        }
-      );
-
-      // Ensure inputs are visible
-      const inputs = formRef.current?.querySelectorAll('input, textarea');
-      inputs?.forEach((input) => {
-        input.style.opacity = '1';
-        input.style.visibility = 'visible';
-      });
-    } catch (error) {
-      console.warn('Animation setup error:', error);
-      if (formRef.current) formRef.current.style.opacity = '1';
-    }
-  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -72,7 +26,7 @@ export default function Contact() {
 
   const validateForm = () => {
     if (!formData.name.trim() || formData.name.trim().length < 2) return "Name must be at least 2 characters.";
-
+    
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email || !emailRegex.test(formData.email)) return "Please enter a valid email address.";
 
@@ -97,19 +51,16 @@ export default function Contact() {
       setIsSubmitting(true);
       await submitContactMessage(formData);
 
-      // Show success message
+      // Show success modal
       setSubmitted(true);
 
-      // Reset form after delay
-      setTimeout(() => {
-        setFormData({
-          name: '',
-          email: '',
-          subject: '',
-          message: ''
-        });
-        setSubmitted(false);
-      }, 3000);
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        subject: '',
+        message: ''
+      });
     } catch (error) {
       setSubmitError(error?.message || 'Unable to send your message right now.');
     } finally {
@@ -135,19 +86,22 @@ export default function Contact() {
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 p-8 flex flex-col items-center text-center"
             >
-              <button
+              <button 
                 onClick={() => setSubmitted(false)}
                 className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <IoCloseOutline size={24} />
               </button>
-              <div className="w-20 h-20 mb-6 rounded-full bg-[#133020]/10 text-[#133020] flex items-center justify-center">
+
+              <div className="w-20 h-20 mb-6 rounded-full bg-green-50 text-green-500 flex items-center justify-center">
                 <IoCheckmarkCircleOutline size={40} />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Thank You!</h3>
+
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Message Sent!</h3>
               <p className="text-gray-500 mb-8 leading-relaxed">
-                We've received your message and will get back to you soon.
+                Thank you for reaching out. We've received your inquiry and will get back to you shortly.
               </p>
+
               <button
                 onClick={() => setSubmitted(false)}
                 className="w-full py-3.5 bg-black hover:bg-gray-800 text-white rounded-xl text-sm font-semibold transition-all shadow-md active:scale-95"
@@ -158,6 +112,7 @@ export default function Contact() {
           </div>
         )}
       </AnimatePresence>
+
       <section className="contact-section">
         <div className="container">
           <div className="contact-card-main">
@@ -178,9 +133,9 @@ export default function Contact() {
                   blendSoftness={0.05}
                   rotationAmount={500}
                   noiseScale={2}
-                  grainAmount={0}
+                  grainAmount={0.05}
                   grainScale={2}
-                  grainAnimated={false}
+                  grainAnimated={true}
                   contrast={1.4}
                   gamma={1}
                   saturation={1}
@@ -190,14 +145,32 @@ export default function Contact() {
                 />
               </div>
               <div className="visual-content">
-                <h2 ref={titleRef}>Let's Connect And Talk</h2>
-                <p>We provide global Data Engineering Services to enable AI Solutions.</p>
+                <motion.h2 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8 }}
+                >
+                  Let's Connect And Talk
+                </motion.h2>
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.2 }}
+                >
+                  We provide global Data Engineering Services to enable AI Solutions.
+                </motion.p>
               </div>
             </div>
 
             {/* Form Column */}
-            <div className="contact-right-form" ref={formRef}>
-              <form className="contact-form" onSubmit={handleSubmit}>
+            <div className="contact-right-form">
+              <motion.form 
+                className="contact-form" 
+                onSubmit={handleSubmit}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8 }}
+              >
                 <div className="form-group">
                   <label htmlFor="name">Full Name</label>
                   <input
@@ -254,11 +227,11 @@ export default function Contact() {
                   {isSubmitting ? 'Sending Message...' : 'Send Message'}
                 </button>
                 {submitError && <p className="error-message">{submitError}</p>}
-              </form>
+              </motion.form>
             </div>
           </div>
         </div>
       </section>
-    </main >
+    </main>
   );
 }
