@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, onSnapshot, doc, updateDoc, serverTimestamp, getDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
-import { IoMenuOutline, IoCloseOutline, IoGridOutline, IoDocumentTextOutline, IoChatbubbleEllipsesOutline, IoChevronBackOutline, IoChevronForwardOutline, IoLogOutOutline, IoWarningOutline, IoMailOutline, IoLockClosedOutline, IoTimeOutline, IoPersonOutline, IoCheckmarkCircleOutline, IoSearchOutline, IoCalendarOutline, IoTrashOutline, IoChevronDownOutline, IoFilterOutline } from 'react-icons/io5';
+import { IoMenuOutline, IoCloseOutline, IoGridOutline, IoDocumentTextOutline, IoChatbubbleEllipsesOutline, IoChevronBackOutline, IoChevronForwardOutline, IoLogOutOutline, IoWarningOutline, IoMailOutline, IoLockClosedOutline, IoTimeOutline, IoPersonOutline, IoCheckmarkCircleOutline, IoSearchOutline, IoCalendarOutline, IoTrashOutline, IoChevronDownOutline, IoFilterOutline, IoNotificationsOutline, IoStarOutline, IoArchiveOutline, IoArrowBackOutline, IoArrowForwardOutline } from 'react-icons/io5';
 import { motion, AnimatePresence } from 'motion/react';
 import emailjs from '@emailjs/browser';
 import logo from '../assets/logo.png';
@@ -361,7 +361,7 @@ function RecentActivityCard({ title, items, type, onViewAll }) {
             const initial = (firstName?.[0] || '') + (lastName?.[0] || '');
 
             return (
-              <div key={item.id} className={`p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors ${idx !== items.slice(0, 10).length - 1 ? 'border-b border-gray-50' : ''}`}>
+              <div key={item.id} className={`p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors group/item ${idx !== items.slice(0, 10).length - 1 ? 'border-b border-gray-50' : ''}`}>
                 <div className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center text-[10px] font-bold shrink-0 shadow-sm border border-black group-hover:scale-105 transition-transform">
                   {initial || <IoPersonOutline size={14} />}
                 </div>
@@ -442,7 +442,7 @@ function NotificationModal({ message, onClose }) {
   );
 }
 
-function ApplicantDetailsModal({ isOpen, onClose, application, onDelete }) {
+function ApplicantDetailsModal({ isOpen, onClose, application, onDelete, onReschedule }) {
   if (!isOpen || !application) return null;
 
   const detailFields = [
@@ -590,12 +590,41 @@ function ApplicantDetailsModal({ isOpen, onClose, application, onDelete }) {
                   <div className="flex flex-col gap-0.5">
                     <span className="text-[10px] font-bold text-gray-400 tracking-widest">Scheduled Time</span>
                     <span className="text-sm font-bold text-gray-900">
-                      {application.interviewScheduledAt?.toDate
-                        ? application.interviewScheduledAt.toDate().toLocaleString()
-                        : new Date(application.interviewScheduledAt).toLocaleString()}
+                      {(() => {
+                        const d = application.interviewScheduledAt?.toDate
+                          ? application.interviewScheduledAt.toDate()
+                          : new Date(application.interviewScheduledAt);
+                        return d.toLocaleString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          hour12: true
+                        });
+                      })()}
                     </span>
                   </div>
                 </div>
+
+                {(() => {
+                  const d = application.interviewScheduledAt?.toDate
+                    ? application.interviewScheduledAt.toDate()
+                    : new Date(application.interviewScheduledAt);
+                  const isUpcoming = d && d > new Date();
+
+                  if (!isUpcoming) return null;
+
+                  return (
+                    <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
+                      <button
+                        onClick={() => { onReschedule(application); onClose(); }}
+                        className="w-full py-2 bg-black text-white rounded-xl text-[10px] font-black tracking-widest uppercase hover:bg-gray-800 transition-all active:scale-95"
+                      >
+                        Reschedule Interview
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
@@ -632,50 +661,331 @@ function ApplicantDetailsModal({ isOpen, onClose, application, onDelete }) {
 function ScheduledInterviewsCard({ interviews, onItemClick }) {
   const hasInterviews = interviews && interviews.length > 0;
 
+  const partitioned = useMemo(() => {
+    if (!interviews) return { today: [], upcoming: [] };
+    const todayStr = new Date().toDateString();
+    const today = [];
+    const upcoming = [];
+
+    interviews.forEach(item => {
+      const date = item.interviewScheduledAt.toDate ? item.interviewScheduledAt.toDate() : new Date(item.interviewScheduledAt);
+      if (date.toDateString() === todayStr) {
+        today.push(item);
+      } else {
+        upcoming.push(item);
+      }
+    });
+    return { today, upcoming };
+  }, [interviews]);
+
+  const InterviewItem = ({ item, isToday, isLast }) => {
+    const date = item.interviewScheduledAt.toDate ? item.interviewScheduledAt.toDate() : new Date(item.interviewScheduledAt);
+    return (
+      <div
+        onClick={() => onItemClick && onItemClick(item)}
+        className={`p-5 flex items-start gap-4 hover:bg-gray-50/80 transition-colors ${onItemClick ? 'cursor-pointer' : ''} ${!isLast ? 'border-b border-gray-100' : ''}`}
+      >
+        <div className={`w-12 h-12 rounded-2xl flex flex-col items-center justify-center shrink-0 ${isToday ? 'bg-black text-white shadow-md' : 'bg-gray-50 text-gray-900 border border-gray-100'}`}>
+          <span className="text-[10px] font-bold">{date.toLocaleDateString(undefined, { month: 'short' })}</span>
+          <span className="text-lg font-bold leading-none">{date.getDate()}</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 mb-1">
+            <span className={`w-1.5 h-1.5 rounded-full ${isToday ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></span>
+            <p className="text-[10px] font-bold text-gray-400 tracking-wider truncate">
+              {item.interviewType === 'pre-screening' ? 'Pre-screening' : 'Final Interview'}
+            </p>
+          </div>
+          <h4 className="font-bold text-gray-900 truncate mb-1">{item.firstName} {item.lastName}</h4>
+          <div className="flex items-center gap-2 text-gray-500">
+            <IoTimeOutline size={14} />
+            <span className="text-xs font-semibold">{date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col gap-3 mb-6">
       <div className="flex items-center justify-between px-1">
-        <h3 className="text-sm text-gray-400 tracking-widest">Upcoming Interviews</h3>
-        <span className="text-[10px] bg-black text-white px-2 py-0.5 rounded-full font-bold">{interviews ? interviews.length : 0}</span>
+        <h3 className="text-sm text-gray-400 tracking-widest uppercase">Interviews</h3>
+        <span className="text-[10px] bg-[#FFB347] text-white px-2 py-0.5 rounded-full font-bold">{interviews ? interviews.length : 0}</span>
       </div>
       {hasInterviews ? (
-        <div className="w-full bg-white border border-gray-100 rounded-[32px] shadow-sm overflow-hidden">
+        <div className="w-full bg-white border border-gray-100 rounded-[32px] shadow-sm overflow-hidden min-h-[100px]">
           <div className="flex flex-col">
-            {interviews.map((item, idx) => {
-              const date = item.interviewScheduledAt.toDate ? item.interviewScheduledAt.toDate() : new Date(item.interviewScheduledAt);
-              const isToday = new Date().toDateString() === date.toDateString();
-
-              return (
-                <div key={item.id} onClick={() => onItemClick && onItemClick(item)} className={`p-5 flex items-start gap-4 hover:bg-gray-50/80 transition-colors ${onItemClick ? 'cursor-pointer' : ''} ${idx !== interviews.length - 1 ? 'border-b border-gray-100' : ''}`}>
-                  <div className={`w-12 h-12 rounded-2xl flex flex-col items-center justify-center shrink-0 ${isToday ? 'bg-black text-white shadow-md' : 'bg-gray-50 text-gray-900 border border-gray-100'}`}>
-                    <span className="text-[10px] font-bold">{date.toLocaleDateString(undefined, { month: 'short' })}</span>
-                    <span className="text-lg font-bold leading-none">{date.getDate()}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <span className={`w-1.5 h-1.5 rounded-full ${isToday ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></span>
-                      <p className="text-[10px] font-bold text-gray-400 tracking-wider truncate">
-                        {item.interviewType === 'pre-screening' ? 'Pre-screening' : 'Final Interview'}
-                      </p>
-                    </div>
-                    <h4 className="font-bold text-gray-900 truncate mb-1">{item.firstName} {item.lastName}</h4>
-                    <div className="flex items-center gap-2 text-gray-500">
-                      <IoTimeOutline size={14} />
-                      <span className="text-xs font-semibold">{date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
-                    </div>
-                  </div>
+            {partitioned.today.length > 0 && (
+              <div className="flex flex-col">
+                <div className="px-5 py-3 bg-gray-50/50 border-b border-gray-100">
+                  <span className="text-[9px] font-black text-gray-400 tracking-[0.2em] uppercase">Today</span>
                 </div>
-              );
-            })}
+                {partitioned.today.map((item, idx) => (
+                  <InterviewItem key={item.id} item={item} isToday={true} isLast={idx === partitioned.today.length - 1 && partitioned.upcoming.length === 0} />
+                ))}
+              </div>
+            )}
+
+            {partitioned.upcoming.length > 0 && (
+              <div className="flex flex-col">
+                <div className="px-5 py-3 bg-gray-50/50 border-b border-gray-100">
+                  <span className="text-[9px] font-black text-gray-400 tracking-[0.2em] uppercase">Upcoming</span>
+                </div>
+                {partitioned.upcoming.map((item, idx) => (
+                  <InterviewItem key={item.id} item={item} isToday={false} isLast={idx === partitioned.upcoming.length - 1} />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       ) : (
-        <div className="w-full py-8 text-center flex flex-col items-center justify-center opacity-60">
+        <div className="w-full py-8 text-center flex flex-col items-center justify-center opacity-40">
           <IoCalendarOutline size={32} className="mb-3 text-gray-400" />
-          <p className="text-sm text-gray-400">No upcoming interviews</p>
+          <p className="text-sm font-medium text-gray-400">No upcoming interviews</p>
         </div>
       )}
     </div>
+  );
+}
+
+function NotificationBell({ applications, messages, onItemClick }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [lastCheck, setLastCheck] = useState(() => {
+    const saved = localStorage.getItem('admin_last_notification_check');
+    return saved ? parseInt(saved) : 0;
+  });
+
+  const notifications = useMemo(() => {
+    const all = [
+      ...applications.map(app => ({ ...app, type: 'application', timestamp: app.createdAt })),
+      ...messages.map(msg => ({ ...msg, type: 'message', timestamp: msg.createdAt }))
+    ].sort((a, b) => {
+      const getTime = (val) => val?.toMillis ? val.toMillis() : (val instanceof Date ? val.getTime() : new Date(val || 0).getTime());
+      return getTime(b.timestamp) - getTime(a.timestamp);
+    });
+
+    const groups = {};
+    const today = new Date().toDateString();
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+
+    all.forEach(item => {
+      if (!item.timestamp) return;
+      const dateObj = item.timestamp.toDate ? item.timestamp.toDate() : new Date(item.timestamp);
+      const dateStr = dateObj.toDateString();
+      let label = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      
+      if (dateStr === today) label = 'Today';
+      else if (dateStr === yesterday) label = 'Yesterday';
+
+      if (!groups[label]) groups[label] = [];
+      groups[label].push(item);
+    });
+
+    return Object.entries(groups).map(([date, items]) => ({ date, items })).slice(0, 10);
+  }, [applications, messages]);
+
+  const totalUnread = useMemo(() => {
+    // Only show items newer than the last time we checked clicking the bell.
+    return [
+      ...applications.filter(a => (a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt).getTime()) > lastCheck),
+      ...messages.filter(m => (m.createdAt?.toMillis ? m.createdAt.toMillis() : new Date(m.createdAt).getTime()) > lastCheck)
+    ].length;
+  }, [applications, messages, lastCheck]);
+
+  const toggleOpen = () => {
+    if (!isOpen) {
+      // If we are opening, mark all current items as "seen" by updating lastCheck
+      const now = Date.now();
+      setLastCheck(now);
+      localStorage.setItem('admin_last_notification_check', now.toString());
+    }
+    setIsOpen(!isOpen);
+  };
+
+  return (
+    <div className="relative">
+      <button 
+        onClick={toggleOpen}
+        className="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-gray-100 shadow-sm text-gray-400 hover:text-black hover:bg-gray-50 transition-all relative"
+      >
+        <IoNotificationsOutline size={20} />
+        {totalUnread > 0 && (
+          <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center border-2 border-white">
+            {totalUnread > 9 ? '9+' : totalUnread}
+          </span>
+        )}
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+              className="absolute right-0 mt-3 w-[320px] sm:w-[380px] bg-white rounded-3xl shadow-2xl border border-gray-100 z-50 overflow-hidden flex flex-col max-h-[500px]"
+            >
+              <div className="p-5 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
+                <h3 className="text-sm font-bold text-gray-900 tracking-wider uppercase">Notifications</h3>
+                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{totalUnread} New Activities</span>
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
+                {notifications.length > 0 ? (
+                  notifications.map((group, idx) => (
+                    <div key={idx} className="mb-4 last:mb-0">
+                      <div className="px-3 py-2 flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-black text-gray-300 tracking-[0.2em] uppercase">{group.date}</span>
+                        <div className="h-px flex-1 bg-gray-50"></div>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        {group.items.map((item, i) => (
+                          <div 
+                            key={i} 
+                            onClick={() => { onItemClick(item); setIsOpen(false); }}
+                            className="p-3 rounded-2xl hover:bg-gray-50 transition-colors cursor-pointer group flex items-start gap-3 border border-transparent hover:border-gray-50"
+                          >
+                            <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 border transition-transform group-hover:scale-105 ${
+                              item.type === 'application' ? 'bg-black text-white border-black' : 'bg-amber-50 text-amber-600 border-amber-100'
+                            }`}>
+                              {item.type === 'application' ? (item.firstName?.[0] || 'A') : <IoChatbubbleEllipsesOutline size={16} />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-0.5">
+                                <h4 className="font-bold text-gray-900 truncate text-[13px]">
+                                  {item.type === 'application' ? `${item.firstName} ${item.lastName}` : item.name}
+                                </h4>
+                                <span className="text-[9px] text-gray-400 font-bold shrink-0">
+                                  {item.timestamp?.toDate ? item.timestamp.toDate().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : ''}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-gray-500 truncate leading-tight">
+                                {item.type === 'application' ? `Applied for ${item.positionApplied}` : `New message: ${item.subject}`}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-12 text-center opacity-40 flex flex-col items-center">
+                    <IoNotificationsOutline size={32} className="mb-3" />
+                    <p className="text-xs font-bold tracking-widest">No Recent Activity</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function MessageSidePanel({ isOpen, onClose, message }) {
+  if (!message) return null;
+
+  const formatDate = (timestamp) => {
+    if (!timestamp) return '';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleString(undefined, { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric', 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
+
+  const handleReply = () => {
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(message.email)}&su=${encodeURIComponent(`Re: ${message.subject}`)}&body=${encodeURIComponent(`\n\n--- Original Message ---\nFrom: ${message.name}\nSubject: ${message.subject}\n\n${message.message}`)}`;
+    window.open(gmailUrl, '_blank');
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[2100]"
+          />
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed right-0 top-0 bottom-0 w-full max-w-[600px] bg-white shadow-2xl z-[2200] flex flex-col font-sans"
+          >
+            {/* Header Toolbar */}
+            <div className="flex items-center px-4 py-3 border-b border-gray-100">
+              <button 
+                onClick={onClose} 
+                className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors flex items-center gap-2 group"
+              >
+                <IoArrowBackOutline size={20} className="group-hover:-translate-x-0.5 transition-transform" />
+                <span className="text-sm font-medium">Back</span>
+              </button>
+            </div>
+
+            {/* Message Content Area */}
+            <div className="flex-1 overflow-y-auto bg-white p-6 sm:p-8">
+              <div className="flex flex-col gap-6">
+                <div>
+                  <h2 className="text-2xl font-normal text-gray-900 mb-8">{message.subject}</h2>
+                  
+                  <div className="flex items-start justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center font-bold text-lg">
+                        {message.name?.[0] || 'U'}
+                      </div>
+                      <div className="flex flex-col">
+                        <div className="flex items-baseline gap-2">
+                          <span className="font-bold text-gray-900">{message.name}</span>
+                          <span className="text-xs text-gray-400">&lt;{message.email}&gt;</span>
+                        </div>
+                        <span className="text-xs text-gray-400">to me</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-xs text-gray-400 font-medium">{formatDate(message.createdAt)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap font-sans border-t border-gray-50 pt-8">
+                  {message.message}
+                </div>
+
+                <div className="mt-12 flex gap-3">
+                  <button 
+                    onClick={handleReply}
+                    className="flex items-center gap-2 px-8 py-2.5 border border-gray-300 rounded-full text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-900 transition-all active:scale-95"
+                  >
+                    <IoArrowBackOutline size={16} />
+                    Reply via Gmail
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer metadata */}
+            <div className="p-4 border-t border-gray-50 bg-gray-50/50">
+              <div className="flex items-center justify-between opacity-40">
+                <img src="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/logo_gmail_lockup_default_1x_rtl.png" alt="Gmail Integrated" className="h-3 grayscale" />
+                <span className="text-[9px] font-black tracking-widest uppercase">End of message</span>
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -755,10 +1065,10 @@ function DeleteConfirmationModal({ isOpen, onClose, onConfirm, application }) {
           <IoTrashOutline size={40} />
         </div>
         <h3 className="text-xl font-bold text-gray-900 mb-2">
-          Delete Applicant?
+          Move to Trash?
         </h3>
         <p className="text-gray-500 mb-8 leading-relaxed text-sm">
-          Are you sure you want to permanently delete <strong>{application?.firstName} {application?.lastName}</strong>? This action cannot be undone.
+          Are you sure you want to move <strong>{application?.firstName} {application?.lastName}</strong> to trash? You can still find them in the Trash filter.
         </p>
 
         <div className="flex flex-col gap-3 w-full">
@@ -769,7 +1079,7 @@ function DeleteConfirmationModal({ isOpen, onClose, onConfirm, application }) {
             }}
             className="w-full py-3.5 text-white rounded-full text-sm font-bold transition-all shadow-md active:scale-95 bg-red-600 hover:bg-red-700"
           >
-            Yes, Permanently Delete
+            Yes, Move to Trash
           </button>
           <button
             onClick={onClose}
@@ -893,6 +1203,7 @@ function CustomStatusSelect({ value, onChange }) {
     { value: 'interview', label: 'Interview' },
     { value: 'accepted', label: 'Accepted' },
     { value: 'rejected', label: 'Rejected' },
+    { value: 'trash', label: 'Trash' },
   ];
   const selectedLabel = options.find(opt => opt.value === value)?.label || 'All Statuses';
 
@@ -942,7 +1253,7 @@ function CustomStatusSelect({ value, onChange }) {
 
 function ColumnSortSelect({ value, onChange }) {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   return (
     <div className="relative flex items-center">
       <button
@@ -1013,6 +1324,7 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState('dashboard'); // dashboard | applications | messages
   const [schedulingApp, setSchedulingApp] = useState(null);
   const [selectedAppDetails, setSelectedAppDetails] = useState(null);
+  const [selectedMessage, setSelectedMessage] = useState(null);
   const [deleteConfirmApp, setDeleteConfirmApp] = useState(null);
   const [pendingDecision, setPendingDecision] = useState(null); // { application, status }
 
@@ -1021,11 +1333,14 @@ export default function Admin() {
   const [appStatusFilter, setAppStatusFilter] = useState('all');
   const [msgSearch, setMsgSearch] = useState('');
   const [columnSorts, setColumnSorts] = useState({
-    pending: 'date_desc',
-    interview: 'date_desc',
+    pending: 'date_asc',
+    interview: 'date_asc',
     accepted: 'date_desc',
     rejected: 'date_desc'
   });
+
+  const nonDeletedApps = useMemo(() => applications.filter(a => !a.deleted), [applications]);
+  const nonDeletedMsgs = useMemo(() => messages.filter(m => !m.deleted), [messages]);
 
   const allowedAdminEmails = useMemo(
     () =>
@@ -1164,6 +1479,11 @@ export default function Admin() {
     try {
       const interviewDate = new Date(`${scheduleData.date}T${scheduleData.time}`);
 
+      // Fetch current data to check if it's a reschedule
+      const appDocRef = doc(db, 'applications', applicationId);
+      const appDocPre = await getDoc(appDocRef);
+      const isRescheduling = appDocPre.exists() && appDocPre.data().status === 'interview';
+
       const updatePayload = {
         status: 'interview',
         interviewType: scheduleData.type,
@@ -1177,23 +1497,56 @@ export default function Admin() {
         updatePayload.finalInterviewDate = interviewDate;
       }
 
-      await updateDoc(doc(db, 'applications', applicationId), updatePayload);
+      await updateDoc(appDocRef, updatePayload);
 
       setSchedulingApp(null);
 
       // Send Email Notification
-      const appDoc = await getDoc(doc(db, 'applications', applicationId));
-      if (appDoc.exists()) {
-        const applicantData = appDoc.data();
+      if (appDocPre.exists()) {
+        const applicantData = appDocPre.data();
         const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
         const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
         const templateId = import.meta.env.VITE_EMAILJS_SCHEDULE_TEMPLATE_ID;
 
         if (serviceId && templateId && publicKey) {
           const typeLabel = scheduleData.type === 'pre-screening' ? 'Pre-screening Interview' : 'Final Interview';
-          const scheduleHtml = `
+          const scheduleHtml = isRescheduling ? `
             <p style="color: #1e293b; font-size: 18px; line-height: 1.6; margin-bottom: 24px;">
-              Great news, <strong>${applicantData.firstName}</strong>! We’ve successfully scheduled your session for the <strong>${applicantData.positionApplied}</strong> position.
+              Hello <strong>${applicantData.firstName}</strong>, we are writing to inform you that your <strong>${typeLabel}</strong> for the <strong>${applicantData.positionApplied}</strong> position has been <strong>rescheduled</strong>.
+            </p>
+            <p style="color: #475569; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
+              We sincerely apologize for any inconvenience this change may cause. Please find your new schedule details below:
+            </p>
+            <div style="border-radius: 24px; padding: 32px; border: 1px solid #e2e8f0; margin-bottom: 32px; background-color: #f8fafc;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="33.33%" style="text-align: center; padding: 8px;">
+                    <span style="font-size: 11px; font-weight: 800; display: block; margin-bottom: 6px; color: #64748b;">Type</span>
+                    <span style="font-size: 16px; color: #1e293b; font-weight: 700;">${typeLabel}</span>
+                  </td>
+                  <td width="33.33%" style="text-align: center; padding: 8px;">
+                    <span style="font-size: 11px; font-weight: 800; display: block; margin-bottom: 6px; color: #64748b;">New Date</span>
+                    <span style="font-size: 16px; color: #1e293b; font-weight: 700;">${scheduleData.date}</span>
+                  </td>
+                  <td width="33.33%" style="text-align: center; padding: 8px;">
+                    <span style="font-size: 11px; font-weight: 800; display: block; margin-bottom: 6px; color: #64748b;">New Time</span>
+                    <span style="font-size: 16px; color: #1e293b; font-weight: 700;">
+                      ${new Date(`1970-01-01T${scheduleData.time}`).toLocaleTimeString(undefined, {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          })}
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </div>
+            <p style="color: #475569; font-size: 15px; line-height: 1.6; text-align: center; margin-bottom: 40px;">
+              The meeting link will be sent to this email address on your new scheduled day. We appreciate your flexibility and look forward to our conversation.
+            </p>
+          ` : `
+            <p style="color: #1e293b; font-size: 18px; line-height: 1.6; margin-bottom: 24px;">
+              Great news! We’ve successfully scheduled your session for the <strong>${applicantData.positionApplied}</strong> position.
             </p>
             <div style="border-radius: 24px; padding: 32px; border: 1px solid #e2e8f0; margin-bottom: 32px;">
               <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -1208,7 +1561,13 @@ export default function Admin() {
                   </td>
                   <td width="33.33%" style="text-align: center; padding: 8px;">
                     <span style="font-size: 11px; font-weight: 800; display: block; margin-bottom: 6px;">Scheduled Time</span>
-                    <span style="font-size: 16px; color: #1e293b; font-weight: 700;">${scheduleData.time}</span>
+                    <span style="font-size: 16px; color: #1e293b; font-weight: 700;">
+                      ${new Date(`1970-01-01T${scheduleData.time}`).toLocaleTimeString(undefined, {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          })}
+                    </span>
                   </td>
                 </tr>
               </table>
@@ -1226,7 +1585,7 @@ export default function Admin() {
               name: applicantData.firstName,
               emailAddress: applicantData.emailAddress,
               body_html: scheduleHtml,
-              decision: 'Interview Scheduled'
+              decision: isRescheduling ? 'Interview Rescheduled' : 'Interview Scheduled'
             },
             publicKey
           );
@@ -1236,7 +1595,9 @@ export default function Admin() {
       }
 
       setActionMessage({
-        text: `Interview scheduled for ${scheduleData.date} at ${scheduleData.time}.`,
+        text: isRescheduling
+          ? `Interview rescheduled for ${scheduleData.date} at ${scheduleData.time}.`
+          : `Interview scheduled for ${scheduleData.date} at ${scheduleData.time}.`,
         type: 'success'
       });
     } catch (error) {
@@ -1246,11 +1607,52 @@ export default function Admin() {
 
   const handleDeleteApplication = async (applicationId) => {
     try {
-      await deleteDoc(doc(db, 'applications', applicationId));
+      await updateDoc(doc(db, 'applications', applicationId), {
+        deleted: true,
+        deletedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
       setSelectedAppDetails(null);
-      setActionMessage({ text: 'Applicant deleted successfully.', type: 'success' });
+      setActionMessage({ text: 'Applicant moved to trash.', type: 'success' });
     } catch (error) {
-      setActionMessage({ text: error?.message || 'Unable to delete applicant.', type: 'error' });
+      setActionMessage({ text: error?.message || 'Unable to move applicant to trash.', type: 'error' });
+    }
+  };
+
+  const handleRestoreApplication = async (applicationId) => {
+    try {
+      await updateDoc(doc(db, 'applications', applicationId), {
+        deleted: false,
+        updatedAt: serverTimestamp(),
+      });
+      setActionMessage({ text: 'Applicant restored successfully.', type: 'success' });
+    } catch (error) {
+      setActionMessage({ text: error?.message || 'Unable to restore applicant.', type: 'error' });
+    }
+  };
+
+  const handleDeleteMessage = async (messageId) => {
+    try {
+      await updateDoc(doc(db, 'messages', messageId), {
+        deleted: true,
+        deletedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      setActionMessage({ text: 'Message moved to trash.', type: 'success' });
+    } catch (error) {
+      setActionMessage({ text: error?.message || 'Unable to move message to trash.', type: 'error' });
+    }
+  };
+
+  const handleRestoreMessage = async (messageId) => {
+    try {
+      await updateDoc(doc(db, 'messages', messageId), {
+        deleted: false,
+        updatedAt: serverTimestamp(),
+      });
+      setActionMessage({ text: 'Message restored successfully.', type: 'success' });
+    } catch (error) {
+      setActionMessage({ text: error?.message || 'Unable to restore message.', type: 'error' });
     }
   };
 
@@ -1287,13 +1689,25 @@ export default function Admin() {
       const nMatch = `${app.firstName || ''} ${app.lastName || ''}`.toLowerCase().includes(term);
       const eMatch = (app.emailAddress || '').toLowerCase().includes(term);
       const pMatch = (app.positionApplied || '').toLowerCase().includes(term);
-      const sMatch = appStatusFilter === 'all' || app.status === appStatusFilter;
+
+      // Soft-delete logic: by default, hide deleted items.
+      // If filter is 'trash', ONLY show deleted items.
+      if (appStatusFilter === 'trash') {
+        if (!app.deleted) return false;
+      } else {
+        if (app.deleted) return false;
+      }
+
+      const sMatch = appStatusFilter === 'all' || appStatusFilter === 'trash' || app.status === appStatusFilter;
       return (nMatch || eMatch || pMatch) && sMatch;
     });
   }, [applications, appSearch, appStatusFilter]);
 
   const filteredMsgs = useMemo(() => {
     return messages.filter((msg) => {
+      // Hide soft-deleted messages by default
+      if (msg.deleted) return false;
+
       const term = msgSearch.toLowerCase();
       return (msg.name || '').toLowerCase().includes(term) ||
         (msg.email || '').toLowerCase().includes(term) ||
@@ -1306,16 +1720,16 @@ export default function Admin() {
     today.setHours(0, 0, 0, 0);
 
     return {
-      totalApps: applications.length,
-      acceptedApps: applications.filter(app => app.status === 'accepted').length,
-      pendingApps: applications.filter((a) => a.status === 'pending').length,
-      todayMsgs: messages.filter((m) => {
+      totalApps: nonDeletedApps.length,
+      acceptedApps: nonDeletedApps.filter(app => app.status === 'accepted').length,
+      pendingApps: nonDeletedApps.filter((a) => a.status === 'pending').length,
+      todayMsgs: nonDeletedMsgs.filter((m) => {
         if (!m.createdAt) return false;
         const d = m.createdAt.toDate ? m.createdAt.toDate() : new Date(m.createdAt);
         return d >= today;
       }).length,
     };
-  }, [applications, messages]);
+  }, [nonDeletedApps, nonDeletedMsgs]);
 
   if (authLoading) {
     return <main className="admin-page"><section className="admin-section"><p>Loading admin panel...</p></section></main>;
@@ -1647,8 +2061,28 @@ export default function Admin() {
 
       <div
         className="flex flex-col md:pl-[80px] md:pr-[80px] w-full max-w-full overflow-x-hidden">
+        <header className="px-4 pt-8 pb-4 flex items-center justify-end w-full">
+          <NotificationBell 
+            applications={applications} 
+            messages={messages} 
+            onItemClick={(item) => {
+              if (item.type === 'application') {
+                setSelectedAppDetails(item);
+              } else {
+                setSelectedMessage(item);
+              }
+            }}
+          />
+        </header>
         <main className="flex-1 p-4 sm:p-8 w-full">
           <AnimatePresence>
+            {selectedMessage && (
+              <MessageSidePanel
+                isOpen={!!selectedMessage}
+                message={selectedMessage}
+                onClose={() => setSelectedMessage(null)}
+              />
+            )}
             {actionMessage && (
               <NotificationModal
                 message={actionMessage}
@@ -1669,6 +2103,7 @@ export default function Admin() {
                 application={selectedAppDetails}
                 onClose={() => setSelectedAppDetails(null)}
                 onDelete={setDeleteConfirmApp}
+                onReschedule={setSchedulingApp}
               />
             )}
             {deleteConfirmApp && (
@@ -1740,22 +2175,22 @@ export default function Admin() {
                   </div>
                   <div className="flex flex-col lg:flex-row gap-3 w-full items-stretch">
                     <div className="flex-[3] min-w-0 h-full">
-                      <ActivityChart applications={applications} messages={messages} />
+                      <ActivityChart applications={nonDeletedApps} messages={nonDeletedMsgs} />
                     </div>
                     <div className="flex-[2] min-w-0 h-full">
-                      <OutcomeChartWidget applications={applications} />
+                      <OutcomeChartWidget applications={nonDeletedApps} />
                     </div>
                   </div>
                   <RecentActivityCard
                     title="Recent Applications"
-                    items={applications}
+                    items={nonDeletedApps}
                     type="application"
                     onViewAll={() => setActiveTab('applications')}
                   />
                 </div>
 
                 <div className="lg:col-span-1 w-full flex flex-col gap-6">
-                  <CalendarWidget applications={applications} messages={messages} />
+                  <CalendarWidget applications={nonDeletedApps} messages={nonDeletedMsgs} />
                   <ScheduledInterviewsCard interviews={upcomingInterviews} onItemClick={setSelectedAppDetails} />
                 </div>
               </div>
@@ -1794,9 +2229,18 @@ export default function Admin() {
                   { title: 'Applied', status: 'pending' },
                   { title: 'Interview', status: 'interview' },
                   { title: 'Accepted', status: 'accepted' },
-                  { title: 'Rejected', status: 'rejected' }
+                  { title: 'Rejected', status: 'rejected' },
+                  ...(appStatusFilter === 'trash' ? [{ title: 'Trash', status: 'trash' }] : [])
                 ].map((col) => {
-                  let items = filteredApps.filter(app => app.status === col.status);
+                  let items;
+                  if (col.status === 'trash') {
+                    items = filteredApps.filter(app => app.deleted);
+                  } else {
+                    items = filteredApps.filter(app => app.status === col.status && !app.deleted);
+                  }
+
+                  if (items.length === 0 && col.status === 'trash' && appStatusFilter !== 'trash') return null;
+                  if (items.length === 0 && appStatusFilter !== 'all' && col.status !== appStatusFilter) return null;
                   const sortPref = columnSorts[col.status];
                   items = items.sort((a, b) => {
                     const getTime = (val) => val?.toMillis ? val.toMillis() : (val instanceof Date ? val.getTime() : new Date(val || 0).getTime());
@@ -1811,7 +2255,7 @@ export default function Admin() {
                       <div className="flex items-center justify-between px-3">
                         <div className="flex items-center gap-2">
                           <h3 className="text-[11px] font-bold text-gray-400 tracking-widest">{col.title}</h3>
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold bg-black text-white`}>{items.length}</span>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#FFB347] text-white`}>{items.length}</span>
                         </div>
                         <ColumnSortSelect
                           value={columnSorts[col.status]}
@@ -1819,85 +2263,126 @@ export default function Admin() {
                         />
                       </div>
 
-                      <div className="flex flex-col min-h-[400px] bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden">
-                        {items.length > 0 ? (
-                          items.map((item, idx) => (
-                            <div
-                              key={item.id}
-                              onClick={() => setSelectedAppDetails(item)}
-                              className={`p-5 hover:bg-gray-50 transition-colors cursor-pointer group flex flex-col gap-3 ${idx !== items.length - 1 ? 'border-b border-gray-200' : ''}`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center text-[10px] font-bold shrink-0 border border-black group-hover:scale-105 transition-transform">
-                                  {item.firstName?.[0]}{item.lastName?.[0]}
-                                </div>
-                                <div className="flex flex-col gap-0.5 overflow-hidden">
-                                  <h4 className="font-bold text-gray-900 leading-tight truncate">{item.firstName} {item.lastName}</h4>
-                                  <p className="text-[10px] text-gray-400 font-bold tracking-wider truncate">{item.positionApplied}</p>
-                                </div>
-                              </div>
-
-                              {item.status === 'interview' && (
-                                <div className="bg-gray-50 p-2 rounded-xl border border-gray-100">
-                                  <div className="flex items-center gap-1 text-[9px] font-bold text-gray-500 mb-0.5">
-                                    <IoTimeOutline size={10} strokeWidth={2} />
-                                    <span>{item.interviewType === 'pre-screening' ? 'Pre-screening' : 'Final Interview'}</span>
+                      <div className="flex flex-col h-[600px] bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden bg-white/50 backdrop-blur-sm">
+                        <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
+                          {items.length > 0 ? (
+                            items.map((item, idx) => (
+                              <div
+                                key={item.id}
+                                onClick={() => setSelectedAppDetails(item)}
+                                className={`p-5 hover:bg-black/5 transition-colors cursor-pointer group flex flex-col gap-3 ${idx !== items.length - 1 ? 'border-b border-gray-100' : ''}`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center text-[10px] font-bold shrink-0 border border-black group-hover:scale-105 transition-transform">
+                                    {item.firstName?.[0]}{item.lastName?.[0]}
                                   </div>
-                                  <p className="text-[10px] text-gray-900 ml-3.5 font-semibold leading-tight">{formatInterviewDate(item.interviewScheduledAt)}</p>
+                                  <div className="flex flex-col gap-0.5 overflow-hidden">
+                                    <h4 className="font-bold text-gray-900 leading-tight truncate">{item.firstName} {item.lastName}</h4>
+                                    <p className="text-[10px] text-gray-400 font-bold tracking-wider truncate">{item.positionApplied}</p>
+                                  </div>
                                 </div>
-                              )}
 
-                              <div className="flex flex-col gap-2 pt-1 border-t border-gray-50 mt-1">
-                                <div className="flex items-center justify-end w-full">
+                                {item.status === 'interview' && (
+                                  <div className="bg-gray-50 p-2 rounded-xl border border-gray-100">
+                                    <div className="flex items-center gap-1 text-[9px] font-bold text-gray-500 mb-0.5">
+                                      <IoTimeOutline size={10} strokeWidth={2} />
+                                      <span>{item.interviewType === 'pre-screening' ? 'Pre-screening' : 'Final Interview'}</span>
+                                    </div>
+                                    <p className="text-[10px] text-gray-900 ml-3.5 font-semibold leading-tight">{formatInterviewDate(item.interviewScheduledAt)}</p>
+                                  </div>
+                                )}
+
+                                <div className="flex flex-col gap-2 pt-1 border-t border-gray-50 mt-1">
+                                  <div className="flex items-center justify-end w-full">
                                     <div className="flex gap-1">
-                                      {(item.status === 'pending' || (item.status === 'interview' && item.interviewType === 'pre-screening')) && (
-                                      <button
-                                        type="button"
-                                        className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-black hover:text-white rounded-full transition-all active:scale-95"
-                                        title={item.status === 'interview' ? 'Schedule Final Interview' : 'Schedule Pre-screening'}
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setSchedulingApp(item);
-                                        }}
-                                      >
-                                        <IoCalendarOutline size={18} />
-                                      </button>
-                                    )}
-                                    <button
-                                      type="button"
-                                      className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-black hover:text-white rounded-full transition-all active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed"
-                                      title={item.status === 'pending' ? 'Pre-screening required' : item.interviewType === 'pre-screening' ? 'Final Interview required' : 'Accept Applicant'}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setPendingDecision({ application: item, status: 'accepted' });
-                                      }}
-                                      disabled={item.status === 'pending' || (item.status === 'interview' && item.interviewType === 'pre-screening') || item.status === 'accepted'}
-                                    >
-                                      <IoCheckmarkCircleOutline size={18} />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-black hover:text-white rounded-full transition-all active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed"
-                                      title="Reject Applicant"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setPendingDecision({ application: item, status: 'rejected' });
-                                      }}
-                                      disabled={item.status === 'rejected'}
-                                    >
-                                      <IoCloseOutline size={20} />
-                                    </button>
+                                      {item.deleted ? (
+                                        <button
+                                          type="button"
+                                          className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-black hover:text-white rounded-full transition-all active:scale-95"
+                                          title="Restore Applicant"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRestoreApplication(item.id);
+                                          }}
+                                        >
+                                          <IoChevronForwardOutline size={18} className="rotate-180" />
+                                        </button>
+                                      ) : (
+                                        <>
+                                          {(() => {
+                                            const scheduledDate = item.interviewScheduledAt?.toDate ? item.interviewScheduledAt.toDate() : (item.interviewScheduledAt ? new Date(item.interviewScheduledAt) : null);
+                                            const isUpcoming = scheduledDate && scheduledDate > new Date();
+
+                                            return (
+                                              <div className="flex gap-1">
+                                                {isUpcoming && (
+                                                  <button
+                                                    type="button"
+                                                    className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-orange-500 hover:text-white rounded-full transition-all active:scale-95"
+                                                    title="Reschedule Interview"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      setSchedulingApp(item);
+                                                    }}
+                                                  >
+                                                    <IoCalendarOutline size={18} />
+                                                  </button>
+                                                )}
+
+                                                {(item.status === 'pending' || (item.status === 'interview' && !isUpcoming && item.interviewType === 'pre-screening')) && (
+                                                  <button
+                                                    type="button"
+                                                    className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white rounded-full transition-all active:scale-95"
+                                                    title={item.status === 'interview' ? 'Schedule Final Interview' : 'Schedule Pre-screening'}
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      setSchedulingApp(item);
+                                                    }}
+                                                  >
+                                                    <IoCalendarOutline size={18} />
+                                                  </button>
+                                                )}
+                                              </div>
+                                            );
+                                          })()}
+                                          <button
+                                            type="button"
+                                            className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-green-600 hover:text-white rounded-full transition-all active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed"
+                                            title={item.status === 'pending' ? 'Pre-screening required' : item.interviewType === 'pre-screening' ? 'Final Interview required' : 'Accept Applicant'}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setPendingDecision({ application: item, status: 'accepted' });
+                                            }}
+                                            disabled={item.status === 'pending' || (item.status === 'interview' && item.interviewType === 'pre-screening') || item.status === 'accepted'}
+                                          >
+                                            <IoCheckmarkCircleOutline size={18} />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white rounded-full transition-all active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed"
+                                            title="Reject Applicant"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setPendingDecision({ application: item, status: 'rejected' });
+                                            }}
+                                            disabled={item.status === 'rejected'}
+                                          >
+                                            <IoCloseOutline size={20} />
+                                          </button>
+                                        </>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               </div>
+                            ))
+                          ) : (
+                            <div className="h-full flex flex-col items-center justify-center py-12 opacity-30">
+                              <IoGridOutline size={24} className="mb-2" />
+                              <p className="text-[10px] font-bold tracking-widest text-center">Empty</p>
                             </div>
-                          ))
-                        ) : (
-                          <div className="flex-1 flex flex-col items-center justify-center py-12 opacity-30">
-                            <IoGridOutline size={24} className="mb-2" />
-                            <p className="text-[10px] font-bold tracking-widest text-center">Empty</p>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                     </div>
                   );

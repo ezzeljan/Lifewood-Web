@@ -1,6 +1,61 @@
-import { collection, addDoc, updateDoc, doc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, serverTimestamp, getDoc, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import emailjs from '@emailjs/browser';
 import { db } from './firebase';
+
+export async function checkExistingApplication(email) {
+  const q = query(
+    collection(db, 'applications'),
+    where('emailAddress', '==', email)
+  );
+  const querySnapshot = await getDocs(q);
+
+  if (querySnapshot.empty) {
+    return { allowed: true };
+  }
+
+  const applications = querySnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }));
+
+  // Check if any application is NOT rejected
+  const activeApp = applications.find(app => app.status !== 'rejected');
+  if (activeApp) {
+    const statusLabel = activeApp.status.charAt(0).toUpperCase() + activeApp.status.slice(1);
+    return {
+      allowed: false,
+      reason: `You already have an active application (Status: ${statusLabel}). Please wait for our decision before applying again.`
+    };
+  }
+
+  // All are rejected. Check the most recent rejection.
+  const rejections = applications.filter(app => app.status === 'rejected');
+  const latestRejection = rejections.sort((a, b) => {
+    const dateA = a.decisionAt?.toDate?.() || a.updatedAt?.toDate?.() || new Date(0);
+    const dateB = b.decisionAt?.toDate?.() || b.updatedAt?.toDate?.() || new Date(0);
+    return dateB - dateA;
+  })[0];
+
+  if (latestRejection) {
+    const decisionDate = latestRejection.decisionAt?.toDate?.() || latestRejection.updatedAt?.toDate?.();
+    if (decisionDate) {
+      const now = new Date();
+      const diffMs = now - decisionDate;
+      const weekInMs = 7 * 24 * 60 * 60 * 1000;
+
+      if (diffMs < weekInMs) {
+        const remainingMs = weekInMs - diffMs;
+        const remainingDays = Math.ceil(remainingMs / (24 * 60 * 60 * 1000));
+        return {
+          allowed: false,
+          reason: `Your previous application was recently rejected. You can apply again in ${remainingDays} day${remainingDays > 1 ? 's' : ''}.`
+        };
+      }
+    }
+  }
+
+  return { allowed: true };
+}
 
 export async function uploadCv(file, applicantName = 'applicant') {
   const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;

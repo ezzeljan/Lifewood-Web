@@ -1,10 +1,22 @@
 export const POSITION_OPTIONS = [
-  'Intern (Applicable to PH only)',
-  'HR/Admin Assistant',
-  'Admin Accounting',
-  'Marketing & Sales Executive',
+  'Casual Video Models (Video Data Collection)',
+  'Moderator & Voice Participants (Voice Data Collection)',
+  'Data Annotator (Iphone User)',
+  'Image Data Collector (Capturing Text - Rich Items)',
   'Data Curation (Genealogy Project)',
+  'Voice Recording Participants (Short Sentences Recording)',
+  'Text Data Collector (Gemini User)',
+  'Voice Recording Participants (FaceTime Audio Recording Session)',
+  'Image Data Collector (Capturing Home Dishes and Menu)',
   'AI Video Creator/Editor',
+  'Genealogy Project Team Leader',
+  "Data Scraper/Crawler (Int'l Text)",
+  'Social Media Content Marketing',
+  'Admin Accounting',
+  'HR/Admin Assistant',
+  'Marketing & Sales Executive',
+  'Operation Manager',
+  'Intern (Applicable to PH Only)',
 ];
 
 export const GENDER_OPTIONS = [

@@ -34,61 +34,21 @@ export default function Contact() {
         formRef.current.style.opacity = '1';
         formRef.current.style.visibility = 'visible';
       }
-      contactInfoRef.current.forEach((item) => {
-        if (item) {
-          item.style.opacity = '1';
-          item.style.visibility = 'visible';
-        }
-      });
-
-      // Animate title
-      gsap.fromTo(titleRef.current,
-        { opacity: 0, y: 50 },
-        {
-          scrollTrigger: {
-            trigger: titleRef.current,
-            start: 'top 80%',
-          },
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          ease: 'power3.out'
-        }
-      );
 
       // Animate form
       gsap.fromTo(formRef.current,
-        { opacity: 0, scale: 0.9 },
+        { opacity: 0, x: 50 },
         {
           scrollTrigger: {
             trigger: formRef.current,
             start: 'top 80%',
           },
           opacity: 1,
-          scale: 1,
+          x: 0,
           duration: 0.8,
           ease: 'power3.out'
         }
       );
-
-      // Animate contact info items
-      contactInfoRef.current.forEach((item, index) => {
-        if (!item) return;
-        gsap.fromTo(item,
-          { opacity: 0, x: -50 },
-          {
-            scrollTrigger: {
-              trigger: item,
-              start: 'top 85%',
-            },
-            opacity: 1,
-            x: 0,
-            duration: 0.8,
-            ease: 'power3.out',
-            delay: index * 0.15
-          }
-        );
-      });
 
       // Ensure inputs are visible
       const inputs = formRef.current?.querySelectorAll('input, textarea');
@@ -98,12 +58,7 @@ export default function Contact() {
       });
     } catch (error) {
       console.warn('Animation setup error:', error);
-      // Ensure fallback visibility
-      if (titleRef.current) titleRef.current.style.opacity = '1';
       if (formRef.current) formRef.current.style.opacity = '1';
-      contactInfoRef.current.forEach((item) => {
-        if (item) item.style.opacity = '1';
-      });
     }
   }, []);
 
@@ -115,9 +70,28 @@ export default function Contact() {
     }));
   };
 
+  const validateForm = () => {
+    if (!formData.name.trim() || formData.name.trim().length < 2) return "Name must be at least 2 characters.";
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email || !emailRegex.test(formData.email)) return "Please enter a valid email address.";
+
+    if (!formData.subject.trim() || formData.subject.trim().length < 3) return "Subject must be at least 3 characters.";
+    
+    if (!formData.message.trim() || formData.message.trim().length < 10) return "Message must be at least 10 characters.";
+
+    return "";
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitError('');
+
+    const formError = validateForm();
+    if (formError) {
+      setSubmitError(formError);
+      return;
+    }
 
     try {
       setIsSubmitting(true);
@@ -142,33 +116,6 @@ export default function Contact() {
       setIsSubmitting(false);
     }
   };
-
-  const contactInfo = [
-    {
-      icon: '📍',
-      title: 'Address',
-      details: 'Multiple global offices',
-      description: 'San Francisco, London, Singapore, Berlin'
-    },
-    {
-      icon: '📧',
-      title: 'Email',
-      details: 'contact@lifewood.tech',
-      description: 'General inquiries'
-    },
-    {
-      icon: '📞',
-      title: 'Phone',
-      details: '+1 (415) 555-0100',
-      description: 'Monday - Friday, 9am - 6pm'
-    },
-    {
-      icon: '💬',
-      title: 'Social',
-      details: '@LifewoodData',
-      description: 'Follow us on social media'
-    }
-  ];
 
   return (
     <main className="contact">
@@ -213,11 +160,10 @@ export default function Contact() {
       </AnimatePresence>
       <section className="contact-section">
         <div className="container">
-
-          <div className="contact-content">
-            {/* Text Column */}
-            <div className="contact-text-container">
-              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: -1 }}>
+          <div className="contact-card-main">
+            {/* Visual Column */}
+            <div className="contact-left-visual">
+              <div className="grainient-container">
                 <Grainient
                   color1="#ffb347"
                   color2="#ffffff"
@@ -243,11 +189,14 @@ export default function Contact() {
                   zoom={0.9}
                 />
               </div>
-              <h2>Let's Connect <br></br>And Talk</h2>
+              <div className="visual-content">
+                <h2 ref={titleRef}>Let's Connect And Talk</h2>
+                <p>We're here to help you automate and optimize your data workflows.</p>
+              </div>
             </div>
 
-            {/* Contact Form Column */}
-            <div className="form-container" ref={formRef}>
+            {/* Form Column */}
+            <div className="contact-right-form" ref={formRef}>
               <form className="contact-form" onSubmit={handleSubmit}>
                 <div className="form-group">
                   <label htmlFor="name">Full Name</label>
@@ -257,7 +206,7 @@ export default function Contact() {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder="Your name"
+                    placeholder="e.g. John Doe"
                     required
                   />
                 </div>
@@ -270,7 +219,7 @@ export default function Contact() {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    placeholder="your@email.com"
+                    placeholder="e.g. john@example.com"
                     required
                   />
                 </div>
@@ -296,18 +245,17 @@ export default function Contact() {
                     value={formData.message}
                     onChange={handleChange}
                     placeholder="Your message here..."
-                    rows="4"
+                    rows="5"
                     required
                   ></textarea>
                 </div>
 
                 <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                  {isSubmitting ? 'Sending...' : 'Send Message'}
+                  {isSubmitting ? 'Sending Message...' : 'Send Message'}
                 </button>
-                {submitError && <p style={{ color: '#b91c1c', marginTop: '0.75rem' }}>{submitError}</p>}
+                {submitError && <p className="error-message">{submitError}</p>}
               </form>
             </div>
-
           </div>
         </div>
       </section>
