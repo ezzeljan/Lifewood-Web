@@ -89,6 +89,33 @@ export async function uploadCv(file, applicantName = 'applicant') {
   };
 }
 
+export async function uploadProfileImage(file) {
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', uploadPreset);
+  formData.append('folder', 'profiles');
+  formData.append('resource_type', 'image');
+
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${cloudName}/upload`,
+    {
+      method: 'POST',
+      body: formData,
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error?.message || 'Failed to upload profile image');
+  }
+
+  const data = await response.json();
+  return data.secure_url;
+}
+
 export async function submitApplication(payload) {
   const docRef = await addDoc(collection(db, 'applications'), {
     firstName: payload.firstName,

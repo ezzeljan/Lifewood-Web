@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
+import { signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from 'firebase/auth';
 import { collection, onSnapshot, doc, updateDoc, serverTimestamp, getDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
-import { IoMenuOutline, IoCloseOutline, IoGridOutline, IoDocumentTextOutline, IoChatbubbleEllipsesOutline, IoChevronBackOutline, IoChevronForwardOutline, IoLogOutOutline, IoWarningOutline, IoMailOutline, IoLockClosedOutline, IoTimeOutline, IoPersonOutline, IoCheckmarkCircleOutline, IoSearchOutline, IoCalendarOutline, IoTrashOutline, IoChevronDownOutline, IoFilterOutline, IoNotificationsOutline, IoStarOutline, IoArchiveOutline, IoArrowBackOutline, IoArrowForwardOutline } from 'react-icons/io5';
+import { IoMenuOutline, IoCloseOutline, IoGridOutline, IoDocumentTextOutline, IoChatbubbleEllipsesOutline, IoChevronBackOutline, IoChevronForwardOutline, IoLogOutOutline, IoWarningOutline, IoMailOutline, IoLockClosedOutline, IoTimeOutline, IoPersonOutline, IoCheckmarkCircleOutline, IoSearchOutline, IoCalendarOutline, IoTrashOutline, IoChevronDownOutline, IoFilterOutline, IoNotificationsOutline, IoStarOutline, IoArchiveOutline, IoArrowBackOutline, IoArrowForwardOutline, IoCameraOutline } from 'react-icons/io5';
 import { motion, AnimatePresence } from 'motion/react';
 import emailjs from '@emailjs/browser';
 import logo from '../assets/logo.png';
 import icon from '../assets/icon.png';
 import Grainient from '../components/Grainient';
+import { uploadProfileImage } from '../lib/api';
 import './Admin.css';
 
 function StatusBadge({ status }) {
@@ -1309,6 +1310,7 @@ function ColumnSortSelect({ value, onChange }) {
 const navWithIcons = [
   { id: "dashboard", label: "Dashboard", icon: <IoGridOutline size={20} /> },
   { id: "applications", label: "Applications", icon: <IoDocumentTextOutline size={20} /> },
+  { id: "account", label: "Account", icon: <IoPersonOutline size={20} /> },
 ];
 
 export default function Admin() {
@@ -1332,7 +1334,10 @@ export default function Admin() {
   // Sidebar & Navigation state
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
-  const [activeTab, setActiveTab] = useState('dashboard'); // dashboard | applications | messages
+  const [activeTab, setActiveTab] = useState('dashboard'); // dashboard | applications | messages | account
+  const [newName, setNewName] = useState('');
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [newPhotoURL, setNewPhotoURL] = useState('');
   const [schedulingApp, setSchedulingApp] = useState(null);
   const [selectedAppDetails, setSelectedAppDetails] = useState(null);
   const [selectedMessage, setSelectedMessage] = useState(null);
@@ -1419,6 +1424,63 @@ export default function Admin() {
       unsubMessages();
     };
   }, [isAdmin]);
+
+  useEffect(() => {
+    if (currentUser) {
+      setNewName(currentUser.displayName || '');
+      setNewPhotoURL(currentUser.photoURL || '');
+    }
+  }, [currentUser]);
+
+  const handleUpdateProfile = async () => {
+    if (!currentUser) return;
+    setIsUpdatingProfile(true);
+    setActionMessage(null);
+
+    try {
+      await updateProfile(currentUser, {
+        displayName: newName,
+        photoURL: newPhotoURL || currentUser.photoURL
+      });
+      
+      // Force reload of user data to trigger UI updates
+      await auth.currentUser.reload();
+      setCurrentUser({...auth.currentUser});
+      
+      setActionMessage({ text: 'Profile updated successfully!', type: 'success' });
+    } catch (error) {
+      setActionMessage({ text: error?.message || 'Failed to update profile.', type: 'error' });
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
+
+  const handleProfileImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsUpdatingProfile(true);
+    setActionMessage(null);
+
+    try {
+      const url = await uploadProfileImage(file);
+      setNewPhotoURL(url);
+      
+      // Auto-save the new photo URL to profile
+      if (currentUser) {
+        await updateProfile(auth.currentUser, {
+          photoURL: url
+        });
+        await auth.currentUser.reload();
+        setCurrentUser({...auth.currentUser});
+        setActionMessage({ text: 'Profile image updated successfully!', type: 'success' });
+      }
+    } catch (error) {
+      setActionMessage({ text: error?.message || 'Failed to upload image.', type: 'error' });
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -1715,7 +1777,7 @@ export default function Admin() {
 
   const upcomingInterviews = useMemo(() => {
     const now = new Date();
-    return applications
+    return nonDeletedApps
       .filter((app) => {
         if (app.status !== 'interview' || !app.interviewScheduledAt) return false;
         const interviewDate = app.interviewScheduledAt.toDate ? app.interviewScheduledAt.toDate() : new Date(app.interviewScheduledAt);
@@ -1726,7 +1788,7 @@ export default function Admin() {
         const tB = b.interviewScheduledAt.toDate ? b.interviewScheduledAt.toDate() : new Date(b.interviewScheduledAt);
         return tA - tB;
       });
-  }, [applications]);
+  }, [nonDeletedApps]);
 
   const filteredApps = useMemo(() => {
     return applications.filter((app) => {
@@ -2478,6 +2540,85 @@ export default function Admin() {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'account' && (
+            <div className="flex flex-col gap-6 max-w-4xl mx-auto md:mx-0">
+              <div className="px-4 sm:px-0">
+                <h1 className="text-3xl font-bold text-gray-900 m-0">Account Settings</h1>
+                <p className="text-gray-500 mt-2 font-medium">Manage your administrative profile and preferences.</p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-4">
+                {/* Profile Card */}
+                <div className="lg:col-span-12 flex flex-col gap-6">
+                  <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm p-8 sm:p-10 flex flex-col sm:flex-row items-center sm:items-start gap-10">
+                    <div className="relative group shrink-0">
+                      <div className="w-40 h-40 rounded-full bg-gray-100 overflow-hidden border-[6px] border-white shadow-xl flex items-center justify-center relative">
+                        {currentUser?.photoURL || newPhotoURL ? (
+                          <img src={newPhotoURL || currentUser.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-[#133020] text-white flex items-center justify-center text-5xl font-bold">
+                            {currentUser?.displayName?.[0] || currentUser?.email?.[0]?.toUpperCase() || 'A'}
+                          </div>
+                        )}
+                        {/* Shimmer/Overlay on hover */}
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
+                          <IoCameraOutline size={32} className="text-white transform scale-90 group-hover:scale-100 transition-transform" />
+                        </div>
+                        {isUpdatingProfile && (
+                          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                            <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                          </div>
+                        )}
+                      </div>
+                      <label className="absolute bottom-1 right-1 w-12 h-12 bg-[#FFB347] text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:bg-[#ffb347]/90 transition-all group-hover:scale-110 border-4 border-white active:scale-95">
+                        <input type="file" className="hidden" accept="image/*" onChange={handleProfileImageUpload} disabled={isUpdatingProfile} />
+                        <IoCameraOutline size={22} />
+                      </label>
+                    </div>
+
+                    <div className="flex-1 flex flex-col gap-6 w-full pt-2">
+                      <div className="flex flex-col gap-2 w-full">
+                        <label className="text-[10px] font-black text-gray-400 tracking-[0.2em] uppercase ml-1">Admin Identity</label>
+                        <input 
+                          type="text" 
+                          value={newName} 
+                          onChange={(e) => setNewName(e.target.value)}
+                          placeholder="Your Display Name"
+                          className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-[24px] text-base font-bold text-gray-900 focus:bg-white focus:ring-4 focus:ring-black/5 focus:border-black transition-all outline-none"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2 w-full">
+                        <label className="text-[10px] font-black text-gray-400 tracking-[0.2em] uppercase ml-1">Connected Email</label>
+                        <div className="w-full px-6 py-4 bg-gray-50/50 border border-gray-100 rounded-[24px] text-base font-bold text-gray-400 flex items-center gap-3">
+                           <IoMailOutline size={18} />
+                           {currentUser?.email || ''}
+                        </div>
+                        <p className="text-[10px] text-gray-400 ml-1 font-bold italic tracking-wide uppercase">System Locked Address</p>
+                      </div>
+                      
+                      <div className="pt-4">
+                        <button 
+                          onClick={handleUpdateProfile}
+                          disabled={isUpdatingProfile || (newName === currentUser?.displayName)}
+                          className={`min-w-[180px] py-4 rounded-[20px] text-sm font-black uppercase tracking-[0.15em] transition-all shadow-lg active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-3 ${
+                            (newName !== currentUser?.displayName) ? 'bg-black text-white hover:bg-gray-800' : 'bg-gray-100 text-gray-400'
+                          }`}
+                        >
+                          {isUpdatingProfile ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                              Processing...
+                            </>
+                          ) : 'Apply Changes'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
