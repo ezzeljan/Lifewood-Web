@@ -206,7 +206,7 @@ export default function Careers() {
 
           {/* Motivation Section */}
           <section className="motivation-section py-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-[#133020] mb-6 text-left">
+            <h2 className="text-3xl md:text-4xl font-bold text-black mb-6 text-left">
               It means motivating and growing teams
             </h2>
             <p className="text-lg md:text-xl text-[#555] leading-relaxed max-w-4xl text-left">
@@ -222,7 +222,7 @@ export default function Careers() {
 
           {/* New Chapter Section */}
           <section className="new-chapter-section py-12 text-center">
-            <h2 className="text-2xl md:text-3xl font-semibold text-[#133020] leading-relaxed max-w-5xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-semibold text-black leading-relaxed max-w-5xl mx-auto">
               If you're looking to turn the page on a new chapter in your career make contact with us today. At Lifewood, the adventure is always before you, it's why we've been described as &ldquo;<span className="quote-highlight">always on, never off.</span>&rdquo;
             </h2>
           </section>

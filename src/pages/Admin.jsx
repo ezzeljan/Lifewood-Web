@@ -168,7 +168,7 @@ function ActivityChart({ applications, messages }) {
   const maxVal = Math.max(...chartData.map(d => d.apps + d.msgs), 5); // Minimum 5 for scale
 
   return (
-    <div className="admin-card w-full !m-0 flex flex-col shadow-sm border border-gray-100">
+    <div className="admin-card w-full h-full !m-0 flex flex-col shadow-sm border border-gray-100">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-lg font-bold text-gray-800 !mb-0">Weekly Activity</h3>
         <div className="flex items-center gap-4">
@@ -249,7 +249,7 @@ function OutcomeChartWidget({ applications }) {
 
   if (stats.total === 0) {
     return (
-      <div className="admin-card w-full flex flex-col justify-center items-center shadow-sm border border-gray-100 p-8 h-[260px]">
+      <div className="admin-card w-full h-full flex flex-col justify-center items-center shadow-sm border border-gray-100 p-8">
         <h3 className="text-lg font-bold text-gray-800 mb-6 w-full text-left">Outcome Rate</h3>
         <div className="flex-1 flex flex-col items-center justify-center opacity-40">
           <IoCheckmarkCircleOutline size={32} className="mb-2" />
@@ -263,12 +263,12 @@ function OutcomeChartWidget({ applications }) {
   const strokeDasharray = `${acceptedPercentage} ${100 - acceptedPercentage}`;
 
   return (
-    <div className="admin-card w-full flex flex-col shadow-sm border border-gray-100 h-[260px]">
+    <div className="admin-card w-full h-full flex flex-col shadow-sm border border-gray-100 overflow-hidden">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-lg font-bold text-gray-800 !mb-0">Outcome Rate</h3>
       </div>
 
-      <div className="flex-1 flex flex-row items-center justify-center gap-8 sm:gap-12 px-2 py-2">
+      <div className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 lg:gap-12 px-2 py-4">
         {/* Pie Chart SVG */}
         <div className="relative w-32 h-32 flex-shrink-0 drop-shadow-md">
           <svg viewBox="0 0 42 42" className="w-full h-full transform -rotate-90">
@@ -370,8 +370,13 @@ function RecentActivityCard({ title, items, type, onViewAll }) {
                     <h4 className="font-semibold text-gray-900 truncate">
                       {type === 'application' ? `${item.firstName} ${item.lastName}` : item.name}
                     </h4>
-                    <div className="flex items-center gap-1 text-[11px] text-gray-400 shrink-0">
-                      <span>{formatActivityDate(item.createdAt)}</span>
+                    <div className="flex items-center gap-2 text-[11px] shrink-0">
+                      {type === 'application' && (
+                        <span className={`status-badge ${item.status || 'pending'} !px-2 !py-0.5 !text-[8px] !font-black uppercase tracking-wider`}>
+                          {item.status || 'pending'}
+                        </span>
+                      )}
+                      <span className="text-gray-400 font-medium">{formatActivityDate(item.createdAt)}</span>
                     </div>
                   </div>
                   <p className="text-sm text-gray-500 truncate">
@@ -1317,6 +1322,12 @@ export default function Admin() {
   const [messages, setMessages] = useState([]);
   const [actionMessage, setActionMessage] = useState(null);
   const [isDataLoading, setIsDataLoading] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Sidebar & Navigation state
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -1656,6 +1667,40 @@ export default function Admin() {
     }
   };
 
+  // Auto-cleanup rejected applications older than 7 days
+  useEffect(() => {
+    if (!isAdmin || !applications || applications.length === 0) return;
+
+    const runAutoCleanup = async () => {
+      const now = Date.now();
+      const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+      
+      const expiredApps = applications.filter(app => {
+        if (app.status !== 'rejected' || app.deleted) return false;
+        const decisionTime = app.decisionAt?.toMillis?.() || app.updatedAt?.toMillis?.() || 0;
+        return decisionTime > 0 && (now - decisionTime) > sevenDaysInMs;
+      });
+
+      if (expiredApps.length > 0) {
+        // Run in sequence or batches to avoid overloading
+        for (const app of expiredApps) {
+          try {
+            await updateDoc(doc(db, 'applications', app.id), {
+              deleted: true,
+              deletedAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+              autoCleaned: true
+            });
+          } catch (e) {
+            console.error('Auto-cleanup error:', e);
+          }
+        }
+      }
+    };
+
+    runAutoCleanup();
+  }, [applications.length, isAdmin]);
+
   const formatInterviewDate = (timestamp) => {
     if (!timestamp) return '-';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -1732,7 +1777,26 @@ export default function Admin() {
   }, [nonDeletedApps, nonDeletedMsgs]);
 
   if (authLoading) {
-    return <main className="admin-page"><section className="admin-section"><p>Loading admin panel...</p></section></main>;
+    return (
+      <main className="min-h-screen bg-white/40 flex flex-col items-center justify-center p-8 backdrop-blur-xl">
+        <div className="relative w-24 h-24 mb-10 group">
+          <div className="absolute inset-0 border-4 border-[#133020]/10 rounded-full"></div>
+          <div className="absolute inset-0 border-4 border-[#133020] border-t-transparent rounded-full animate-spin"></div>
+          <div className="absolute inset-4 flex items-center justify-center">
+            <img src={logo} alt="Lifewood Admin" className="w-12 h-12 object-contain opacity-20 group-hover:opacity-40 transition-opacity" />
+          </div>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <h2 className="text-xl font-bold text-[#133020]">Initialising Admin Panel</h2>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-black/10 animate-pulse"></div>
+            <div className="w-1.5 h-1.5 rounded-full bg-black/20 animate-pulse delay-75"></div>
+            <div className="w-1.5 h-1.5 rounded-full bg-black/30 animate-pulse delay-150"></div>
+          </div>
+          <p className="text-xs font-bold tracking-widest text-[#133020]/40 uppercase mt-4">Safe & Secure Environment</p>
+        </div>
+      </main>
+    );
   }
 
   if (!currentUser) {
@@ -1898,7 +1962,7 @@ export default function Admin() {
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
                 className={`flex items-center justify-center transition-all duration-300 w-12 h-12 rounded-full ${isActive
-                  ? "bg-black text-white font-semibold shadow-lg scale-100"
+                  ? "bg-black text-white font-semibold scale-100"
                   : "text-gray-500 hover:bg-black/5 hover:text-gray-900"
                   }`}
                 title={item.label}
@@ -1925,7 +1989,7 @@ export default function Admin() {
       </nav>
 
       {/* Mobile Topbar & Hamburger */}
-      <nav className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#133020]/90 backdrop-blur-xl border-b border-white/10 z-50 flex items-center justify-between px-4">
+      <nav className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#133020]/60 backdrop-blur-xl border-b border-white/20 z-50 flex items-center justify-between px-4">
         <div className="flex items-center shrink-0">
           <img
             src={logo}
@@ -1933,13 +1997,30 @@ export default function Admin() {
             className="h-8 w-auto object-contain brightness-0 invert"
           />
         </div>
-        <button
-          onClick={() => setMobileOpen(true)}
-          className="p-2 rounded-xl hover:bg-white/10 transition-colors text-white"
-          aria-label="Open menu"
-        >
-          <IoMenuOutline size={24} />
-        </button>
+        <div className="flex items-center gap-1">
+          <div className="flex flex-col items-end mr-2 scale-75 origin-right">
+            <span className="text-[14px] font-bold text-white leading-none">
+              {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+            <span className="text-[8px] font-bold text-white/40 uppercase tracking-tighter">
+              {currentTime.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
+            </span>
+          </div>
+          <div className="scale-90 origin-right">
+            <NotificationBell 
+              applications={applications} 
+              messages={messages} 
+              onItemClick={(item) => item.type === 'application' ? setSelectedAppDetails(item) : setSelectedMessage(item)}
+            />
+          </div>
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="p-2.5 rounded-2xl hover:bg-white/10 transition-all text-white active:scale-95"
+            aria-label="Open menu"
+          >
+            <IoMenuOutline size={24} />
+          </button>
+        </div>
       </nav>
 
       {/* Mobile Menu Overlay */}
@@ -1958,7 +2039,7 @@ export default function Admin() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "tween", duration: 0.3 }}
-              className="absolute right-0 top-0 bottom-0 w-[280px] bg-[#133020] shadow-2xl flex flex-col border-l border-white/10"
+              className="absolute right-0 top-0 bottom-0 w-[280px] bg-[#133020]/60 backdrop-blur-2xl shadow-2xl flex flex-col border-l border-white/20"
             >
               <div className="flex items-center justify-between p-4 border-b border-white/10">
                 <img
@@ -1968,7 +2049,7 @@ export default function Admin() {
                 />
                 <button
                   onClick={() => setMobileOpen(false)}
-                  className="p-2 rounded-xl hover:bg-white/10 transition-colors text-white"
+                  className="p-2.5 rounded-2xl hover:bg-white/10 transition-all text-white/80 hover:text-white active:scale-95"
                   aria-label="Close menu"
                 >
                   <IoCloseOutline size={20} />
@@ -1984,9 +2065,9 @@ export default function Admin() {
                         setActiveTab(item.id);
                         setMobileOpen(false);
                       }}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors text-left ${isActive
-                        ? "bg-black text-white font-semibold shadow-md"
-                        : "text-white/70 hover:bg-white/10 hover:text-white"
+                      className={`flex items-center gap-4 px-5 py-3.5 rounded-2xl text-sm font-semibold transition-all text-left ${isActive
+                        ? "bg-white/20 text-white backdrop-blur-md border border-white/20"
+                        : "text-white/50 hover:bg-white/5 hover:text-white/90"
                         }`}
                     >
                       {item.icon}
@@ -2002,9 +2083,9 @@ export default function Admin() {
                     setShowSignOutConfirm(true);
                     setMobileOpen(false);
                   }}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors text-white/70 hover:bg-white/10 hover:text-white w-full text-left"
+                  className="flex items-center gap-4 px-5 py-3.5 rounded-2xl text-sm font-semibold transition-all text-white/50 hover:bg-red-500/20 hover:text-red-300 w-full text-left"
                 >
-                  <IoLogOutOutline className="w-5 h-5" />
+                  <IoLogOutOutline size={18} />
                   Sign Out
                 </button>
               </div>
@@ -2061,17 +2142,22 @@ export default function Admin() {
 
       <div
         className="flex flex-col md:pl-[80px] md:pr-[80px] w-full max-w-full overflow-x-hidden">
-        <header className="px-4 pt-8 pb-4 flex items-center justify-end w-full">
+        <header className="hidden md:flex px-4 pt-8 pb-4 items-center justify-end w-full gap-6">
+          <div className="relative px-6 py-2.5 rounded-2xl overflow-hidden border border-white/20 shadow-sm flex items-center gap-4 group">
+            <div className="absolute inset-0 bg-white/5 backdrop-blur-[1px] z-[1]"></div>
+            <div className="relative z-10 flex flex-col items-end">
+              <span className="text-xl font-black text-[#133020] leading-none tracking-tight">
+                {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
+              </span>
+              <span className="text-[10px] font-bold text-[#133020]/40 uppercase tracking-[0.2em] mt-0.5">
+                {currentTime.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+              </span>
+            </div>
+          </div>
           <NotificationBell 
             applications={applications} 
             messages={messages} 
-            onItemClick={(item) => {
-              if (item.type === 'application') {
-                setSelectedAppDetails(item);
-              } else {
-                setSelectedMessage(item);
-              }
-            }}
+            onItemClick={(item) => item.type === 'application' ? setSelectedAppDetails(item) : setSelectedMessage(item)}
           />
         </header>
         <main className="flex-1 p-4 sm:p-8 w-full">
@@ -2124,7 +2210,12 @@ export default function Admin() {
               />
             )}
           </AnimatePresence>
-          {isDataLoading && <div className="mb-4 mx-4 sm:mx-0 text-gray-500">Loading data...</div>}
+                {isDataLoading && (
+                  <div className="mb-6 mx-4 sm:mx-0 flex items-center gap-4 p-4 bg-[#133020]/5 rounded-3xl border border-[#133020]/10 animate-pulse">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#133020]"></div>
+                    <span className="text-[10px] font-bold text-[#133020] tracking-widest uppercase">Synchronizing Database</span>
+                  </div>
+                )}
 
           {/* DASHBOARD TAB */}
           {activeTab === 'dashboard' && (
@@ -2173,7 +2264,7 @@ export default function Admin() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-col lg:flex-row gap-3 w-full items-stretch">
+                  <div className="flex flex-col xl:flex-row gap-6 w-full items-stretch xl:h-[340px] h-auto mb-6">
                     <div className="flex-[3] min-w-0 h-full">
                       <ActivityChart applications={nonDeletedApps} messages={nonDeletedMsgs} />
                     </div>
@@ -2342,33 +2433,33 @@ export default function Admin() {
                                                     <IoCalendarOutline size={18} />
                                                   </button>
                                                 )}
+                                                <button
+                                                  type="button"
+                                                  className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-green-600 hover:text-white rounded-full transition-all active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed"
+                                                  title={item.status === 'pending' ? 'Pre-screening required' : item.status === 'rejected' ? 'Cannot accept rejected applicant' : item.interviewType === 'pre-screening' ? 'Final Interview required' : 'Accept Applicant'}
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setPendingDecision({ application: item, status: 'accepted' });
+                                                  }}
+                                                  disabled={item.status === 'pending' || (item.status === 'interview' && item.interviewType === 'pre-screening') || item.status === 'accepted' || item.status === 'rejected'}
+                                                >
+                                                  <IoCheckmarkCircleOutline size={18} />
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white rounded-full transition-all active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed"
+                                                  title="Reject Applicant"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setPendingDecision({ application: item, status: 'rejected' });
+                                                  }}
+                                                  disabled={item.status === 'rejected'}
+                                                >
+                                                  <IoCloseOutline size={20} />
+                                                </button>
                                               </div>
                                             );
                                           })()}
-                                          <button
-                                            type="button"
-                                            className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-green-600 hover:text-white rounded-full transition-all active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed"
-                                            title={item.status === 'pending' ? 'Pre-screening required' : item.interviewType === 'pre-screening' ? 'Final Interview required' : 'Accept Applicant'}
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              setPendingDecision({ application: item, status: 'accepted' });
-                                            }}
-                                            disabled={item.status === 'pending' || (item.status === 'interview' && item.interviewType === 'pre-screening') || item.status === 'accepted'}
-                                          >
-                                            <IoCheckmarkCircleOutline size={18} />
-                                          </button>
-                                          <button
-                                            type="button"
-                                            className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white rounded-full transition-all active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed"
-                                            title="Reject Applicant"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              setPendingDecision({ application: item, status: 'rejected' });
-                                            }}
-                                            disabled={item.status === 'rejected'}
-                                          >
-                                            <IoCloseOutline size={20} />
-                                          </button>
                                         </>
                                       )}
                                     </div>

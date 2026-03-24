@@ -72,12 +72,12 @@ export default function Contact() {
 
   const validateForm = () => {
     if (!formData.name.trim() || formData.name.trim().length < 2) return "Name must be at least 2 characters.";
-    
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email || !emailRegex.test(formData.email)) return "Please enter a valid email address.";
 
     if (!formData.subject.trim() || formData.subject.trim().length < 3) return "Subject must be at least 3 characters.";
-    
+
     if (!formData.message.trim() || formData.message.trim().length < 10) return "Message must be at least 10 characters.";
 
     return "";
@@ -135,7 +135,7 @@ export default function Contact() {
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 p-8 flex flex-col items-center text-center"
             >
-              <button 
+              <button
                 onClick={() => setSubmitted(false)}
                 className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 transition-colors"
               >
@@ -191,7 +191,7 @@ export default function Contact() {
               </div>
               <div className="visual-content">
                 <h2 ref={titleRef}>Let's Connect And Talk</h2>
-                <p>We're here to help you automate and optimize your data workflows.</p>
+                <p>We provide global Data Engineering Services to enable AI Solutions.</p>
               </div>
             </div>
 
