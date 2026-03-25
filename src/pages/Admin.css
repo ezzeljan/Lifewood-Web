@@ -150,6 +150,26 @@
   color: #1e40af;
 }
 
+.status-badge.new {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.status-badge.replied {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.status-badge.resolved {
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.status-badge.spam {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
 .action-buttons {
   display: flex;
   gap: 0.5rem;

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from 'firebase/auth';
-import { collection, onSnapshot, doc, updateDoc, serverTimestamp, getDoc, deleteDoc } from 'firebase/firestore';
+import { signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, getIdTokenResult } from 'firebase/auth';
+import { collection, onSnapshot, doc, updateDoc, serverTimestamp, getDoc, deleteDoc, addDoc, query, orderBy, limit } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
-import { IoMenuOutline, IoCloseOutline, IoGridOutline, IoDocumentTextOutline, IoChatbubbleEllipsesOutline, IoChevronBackOutline, IoChevronForwardOutline, IoLogOutOutline, IoWarningOutline, IoMailOutline, IoLockClosedOutline, IoTimeOutline, IoPersonOutline, IoCheckmarkCircleOutline, IoSearchOutline, IoCalendarOutline, IoTrashOutline, IoChevronDownOutline, IoFilterOutline, IoNotificationsOutline, IoStarOutline, IoArchiveOutline, IoArrowBackOutline, IoArrowForwardOutline, IoCameraOutline } from 'react-icons/io5';
+import { IoMenuOutline, IoCloseOutline, IoGridOutline, IoDocumentTextOutline, IoChatbubbleEllipsesOutline, IoChevronBackOutline, IoChevronForwardOutline, IoLogOutOutline, IoWarningOutline, IoMailOutline, IoLockClosedOutline, IoTimeOutline, IoPersonOutline, IoCheckmarkCircleOutline, IoSearchOutline, IoCalendarOutline, IoTrashOutline, IoChevronDownOutline, IoFilterOutline, IoNotificationsOutline, IoStarOutline, IoArchiveOutline, IoArrowBackOutline, IoArrowForwardOutline, IoCameraOutline, IoPulseOutline, IoListOutline, IoExpandOutline, IoContractOutline } from 'react-icons/io5';
 import { motion, AnimatePresence } from 'motion/react';
 import emailjs from '@emailjs/browser';
 import logo from '../assets/logo.png';
@@ -372,11 +372,9 @@ function RecentActivityCard({ title, items, type, onViewAll }) {
                       {type === 'application' ? `${item.firstName} ${item.lastName}` : item.name}
                     </h4>
                     <div className="flex items-center gap-2 text-[11px] shrink-0">
-                      {type === 'application' && (
-                        <span className={`status-badge ${item.status || 'pending'} !px-2 !py-0.5 !text-[8px] !font-black uppercase tracking-wider`}>
-                          {item.status || 'pending'}
+                        <span className={`status-badge ${item.status || (type === 'application' ? 'pending' : 'new')} !px-2 !py-0.5 !text-[8px] !font-black uppercase tracking-wider`}>
+                          {type === 'application' ? (item.status || 'pending') : (item.status === 'new' ? 'Pending' : (item.status || 'new'))}
                         </span>
-                      )}
                       <span className="text-gray-400 font-medium">{formatActivityDate(item.createdAt)}</span>
                     </div>
                   </div>
@@ -525,9 +523,9 @@ function ApplicantDetailsModal({ isOpen, onClose, application, onDelete, onResch
                   { label: 'Pre-screening', id: 1, date: application.preScreeningDate || (application.status === 'interview' && application.interviewType === 'pre-screening' ? application.interviewScheduledAt : null) },
                   { label: 'Final Interview', id: 2, date: application.finalInterviewDate || (application.status === 'interview' && application.interviewType === 'interview' ? application.interviewScheduledAt : null) },
                   {
-                    label: application.status === 'rejected' ? 'Rejected' : (application.status === 'accepted' ? 'Hired' : 'Outcome'),
+                    label: application.status === 'rejected' ? 'Rejected' : (application.status === 'accepted' ? 'Hired' : (application.status === 'withdrew' ? 'Withdrew / Dropped Out' : 'Outcome')),
                     id: 3,
-                    date: application.decisionAt || ((application.status === 'accepted' || application.status === 'rejected') ? application.updatedAt : null)
+                    date: application.decisionAt || ((application.status === 'accepted' || application.status === 'rejected' || application.status === 'withdrew') ? application.updatedAt : null)
                   }
                 ];
 
@@ -544,10 +542,11 @@ function ApplicantDetailsModal({ isOpen, onClose, application, onDelete, onResch
                   const isCurrent = step.type === 'current';
                   const isRejected = step.id === 3 && application.status === 'rejected';
                   const isAccepted = step.id === 3 && application.status === 'accepted';
+                  const isWithdrew = step.id === 3 && application.status === 'withdrew';
 
                   let dotColor = isCurrent ? "bg-black text-white" : "bg-gray-200 text-gray-400";
-                  if (isCurrent && (isRejected || isAccepted)) {
-                    dotColor = isRejected ? "bg-red-500 text-white" : "bg-green-600 text-white";
+                  if (isCurrent && (isRejected || isAccepted || isWithdrew)) {
+                    dotColor = isRejected ? "bg-red-500 text-white" : (isAccepted ? "bg-green-600 text-white" : "bg-purple-600 text-white");
                   }
                   if (!isCurrent) dotColor = "bg-green-50 text-green-700 shadow-sm border border-green-100"; // Previous is always "done"
 
@@ -557,7 +556,7 @@ function ApplicantDetailsModal({ isOpen, onClose, application, onDelete, onResch
                     <div key={idx} className="flex items-start gap-2 sm:gap-4">
                       {idx > 0 && <div className="w-4 sm:w-10 h-0.5 bg-gray-300 mt-5"></div>}
                       <div className="flex flex-col items-center gap-2">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all ${dotColor} ${isCurrent && !isRejected && !isAccepted ? 'ring-4 ring-black/10' : ''}`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all ${dotColor} ${isCurrent && !isRejected && !isAccepted && !isWithdrew ? 'ring-4 ring-black/10' : ''}`}>
                           {!isCurrent ? <IoCheckmarkCircleOutline size={22} className="text-green-600" /> : step.id + 1}
                         </div>
                         <div className="flex flex-col items-center min-w-[70px] sm:min-w-[80px]">
@@ -764,7 +763,7 @@ function NotificationBell({ applications, messages, onItemClick }) {
   const notifications = useMemo(() => {
     const all = [
       ...applications.map(app => ({ ...app, type: 'application', timestamp: app.createdAt })),
-      ...messages.map(msg => ({ ...msg, type: 'message', timestamp: msg.createdAt }))
+      ...messages.filter(m => m.status !== 'spam').map(msg => ({ ...msg, type: 'message', timestamp: msg.createdAt }))
     ].sort((a, b) => {
       const getTime = (val) => val?.toMillis ? val.toMillis() : (val instanceof Date ? val.getTime() : new Date(val || 0).getTime());
       return getTime(b.timestamp) - getTime(a.timestamp);
@@ -794,7 +793,7 @@ function NotificationBell({ applications, messages, onItemClick }) {
     // Only show items newer than the last time we checked clicking the bell.
     return [
       ...applications.filter(a => (a.createdAt?.toMillis ? a.createdAt.toMillis() : new Date(a.createdAt).getTime()) > lastCheck),
-      ...messages.filter(m => (m.createdAt?.toMillis ? m.createdAt.toMillis() : new Date(m.createdAt).getTime()) > lastCheck)
+      ...messages.filter(m => m.status !== 'spam' && (m.createdAt?.toMillis ? m.createdAt.toMillis() : new Date(m.createdAt).getTime()) > lastCheck)
     ].length;
   }, [applications, messages, lastCheck]);
 
@@ -890,7 +889,7 @@ function NotificationBell({ applications, messages, onItemClick }) {
   );
 }
 
-function MessageSidePanel({ isOpen, onClose, message }) {
+function MessageSidePanel({ isOpen, onClose, message, onStatusUpdate }) {
   if (!message) return null;
 
   const formatDate = (timestamp) => {
@@ -909,6 +908,16 @@ function MessageSidePanel({ isOpen, onClose, message }) {
   const handleReply = () => {
     const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(message.email)}&su=${encodeURIComponent(`Re: ${message.subject}`)}&body=${encodeURIComponent(`\n\n--- Original Message ---\nFrom: ${message.name}\nSubject: ${message.subject}\n\n${message.message}`)}`;
     window.open(gmailUrl, '_blank');
+    if (message.status === 'new') {
+      onStatusUpdate(message.id, 'replied');
+    }
+  };
+
+  const statusColors = {
+    new: 'bg-blue-50 text-blue-600 border-blue-100',
+    replied: 'bg-amber-50 text-amber-600 border-amber-100',
+    resolved: 'bg-green-50 text-green-700 border-green-100',
+    spam: 'bg-red-50 text-red-600 border-red-100',
   };
 
   return (
@@ -930,7 +939,7 @@ function MessageSidePanel({ isOpen, onClose, message }) {
             className="fixed right-0 top-0 bottom-0 w-full max-w-[600px] bg-white shadow-2xl z-[2200] flex flex-col font-sans"
           >
             {/* Header Toolbar */}
-            <div className="flex items-center px-4 py-3 border-b border-gray-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <button 
                 onClick={onClose} 
                 className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors flex items-center gap-2 group"
@@ -938,6 +947,34 @@ function MessageSidePanel({ isOpen, onClose, message }) {
                 <IoArrowBackOutline size={20} className="group-hover:-translate-x-0.5 transition-transform" />
                 <span className="text-sm font-medium">Back</span>
               </button>
+
+              <div className="flex items-center gap-2">
+                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${statusColors[message.status || 'new']}`}>
+                  {message.status === 'new' ? 'Pending' : (message.status || 'new')}
+                </span>
+                
+                <div className="flex items-center gap-1.5 ml-2 border-l border-gray-100 pl-3">
+                  {message.status !== 'resolved' && message.status !== 'spam' && (
+                    <button
+                      onClick={() => onStatusUpdate(message.id, 'resolved')}
+                      disabled={message.status !== 'replied'}
+                      className="px-4 py-1.5 bg-[#133020] text-white text-[10px] font-black uppercase tracking-widest rounded-full hover:bg-black transition-all active:scale-95 disabled:opacity-25 disabled:cursor-not-allowed"
+                      title={message.status !== 'replied' ? 'You must reply first' : 'Mark as Resolved'}
+                    >
+                      Resolve
+                    </button>
+                  )}
+                  {message.status !== 'spam' && (
+                    <button
+                      onClick={() => onStatusUpdate(message.id, 'spam')}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
+                      title="Report Spam"
+                    >
+                      <IoWarningOutline size={20} />
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Message Content Area */}
@@ -977,6 +1014,12 @@ function MessageSidePanel({ isOpen, onClose, message }) {
                     <IoArrowBackOutline size={16} />
                     Reply via Gmail
                   </button>
+                  {message.status === 'replied' && (
+                    <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-600 rounded-full text-xs font-bold">
+                       <IoCheckmarkCircleOutline size={16} />
+                       Reply Sent
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -999,8 +1042,19 @@ function DecisionConfirmationModal({ isOpen, onClose, onConfirm, application, st
   if (!isOpen) return null;
 
   const isAccept = status === 'accepted';
-  const colorClass = isAccept ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600';
-  const btnClass = isAccept ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700';
+  const isWithdrew = status === 'withdrew';
+  const colorClass = isAccept ? 'bg-green-50 text-green-600' : isWithdrew ? 'bg-purple-50 text-purple-600' : 'bg-red-50 text-red-600';
+  const btnClass = isAccept ? 'bg-green-600 hover:bg-green-700' : isWithdrew ? 'bg-purple-600 hover:bg-purple-700' : 'bg-red-600 hover:bg-red-700';
+
+  const title = isAccept ? 'Accept Applicant?' : isWithdrew ? 'Mark as Withdrew / Dropped Out?' : 'Reject Applicant?';
+  const body = isAccept ? `Are you sure you want to accept ` : isWithdrew ? `Mark ` : `Are you sure you want to reject `;
+  const bodyEnd = isAccept
+    ? `? This will send an automatic email notification to them.`
+    : isWithdrew
+    ? ` as "Withdrew / Dropped Out"? No email will be sent.`
+    : `? This will send an automatic email notification to them.`;
+  const confirmLabel = isAccept ? 'Yes, Confirm Acceptance' : isWithdrew ? 'Yes, Mark as Withdrew' : 'Yes, Confirm Rejection';
+  const IconEl = isAccept ? IoCheckmarkCircleOutline : isWithdrew ? IoArrowBackOutline : IoWarningOutline;
 
   return (
     <div className="fixed inset-0 z-[2100] flex items-center justify-center p-4">
@@ -1018,13 +1072,11 @@ function DecisionConfirmationModal({ isOpen, onClose, onConfirm, application, st
         className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 p-8 flex flex-col items-center text-center"
       >
         <div className={`w-20 h-20 mb-6 rounded-full flex items-center justify-center ${colorClass}`}>
-          {isAccept ? <IoCheckmarkCircleOutline size={40} /> : <IoWarningOutline size={40} />}
+          <IconEl size={40} />
         </div>
-        <h3 className="text-xl font-bold text-gray-900 mb-2">
-          {isAccept ? 'Accept Applicant?' : 'Reject Applicant?'}
-        </h3>
+        <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
         <p className="text-gray-500 mb-8 leading-relaxed text-sm">
-          Are you sure you want to {isAccept ? 'accept' : 'reject'} <strong>{application.firstName} {application.lastName}</strong>? This will send an automatic email notification to them.
+          {body}<strong>{application.firstName} {application.lastName}</strong>{bodyEnd}
         </p>
 
         <div className="flex flex-col gap-3 w-full">
@@ -1035,7 +1087,7 @@ function DecisionConfirmationModal({ isOpen, onClose, onConfirm, application, st
             }}
             className={`w-full py-3.5 text-white rounded-full text-sm font-bold transition-all shadow-md active:scale-95 ${btnClass}`}
           >
-            Yes, {isAccept ? 'Confirm Acceptance' : 'Confirm Rejection'}
+            {confirmLabel}
           </button>
           <button
             onClick={onClose}
@@ -1205,10 +1257,11 @@ function CustomStatusSelect({ value, onChange }) {
   const [isOpen, setIsOpen] = useState(false);
   const options = [
     { value: 'all', label: 'All Statuses' },
-    { value: 'pending', label: 'Pending' },
+    { value: 'pending', label: 'Applied' },
     { value: 'interview', label: 'Interview' },
     { value: 'accepted', label: 'Accepted' },
     { value: 'rejected', label: 'Rejected' },
+    { value: 'withdrew', label: 'Withdrew / Dropped Out' },
     { value: 'trash', label: 'Trash' },
   ];
   const selectedLabel = options.find(opt => opt.value === value)?.label || 'All Statuses';
@@ -1240,7 +1293,7 @@ function CustomStatusSelect({ value, onChange }) {
               <button
                 key={opt.value}
                 type="button"
-                className={`text-left px-5 py-2.5 text-sm transition-colors hover:bg-gray-50 flex items-center gap-2 ${opt.value === value ? 'text-[#133020] font-bold bg-[#133020]/5' : 'text-gray-600 font-medium'}`}
+                className={`text-left px-5 py-2.5 text-sm transition-colors hover:bg-gray-50 flex items-center gap-2 ${opt.value === value ? 'text-[#133020] font-semibold bg-[#133020]/5' : 'text-gray-600 font-medium'}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   onChange(opt.value);
@@ -1307,11 +1360,113 @@ function ColumnSortSelect({ value, onChange }) {
   );
 }
 
-const navWithIcons = [
-  { id: "dashboard", label: "Dashboard", icon: <IoGridOutline size={20} /> },
-  { id: "applications", label: "Applications", icon: <IoDocumentTextOutline size={20} /> },
-  { id: "account", label: "Account", icon: <IoPersonOutline size={20} /> },
-];
+
+
+function CustomMessageStatusSelect({ value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const options = [
+    { value: 'all', label: 'Inquiries' },
+    { value: 'new', label: 'Pending' },
+    { value: 'replied', label: 'Replied' },
+    { value: 'resolved', label: 'Resolved' },
+    { value: 'spam', label: 'Spam' },
+  ];
+  const selectedLabel = options.find(opt => opt.value === value)?.label || 'Inquiries';
+
+  return (
+    <div className="relative w-full sm:w-auto">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+        className="admin-select w-full sm:w-auto flex items-center justify-between gap-3 text-gray-700 font-medium hover:border-gray-300 transition-colors"
+      >
+        <span>{selectedLabel}</span>
+        <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <IoChevronDownOutline size={16} className="text-gray-400" />
+        </motion.div>
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="absolute top-full mt-2 left-0 w-full sm:w-48 bg-white border border-gray-100 rounded-3xl shadow-xl overflow-hidden z-[100] flex flex-col py-2"
+          >
+            {options.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                className={`text-left px-5 py-2.5 text-sm transition-colors hover:bg-gray-50 flex items-center gap-2 ${opt.value === value ? 'text-[#133020] font-semibold bg-[#133020]/5' : 'text-gray-600 font-medium'}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function CustomMessageFilterSelect({ value, onChange, options, prefix }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedLabel = options.find(opt => opt.value === value)?.label || options[0].label;
+
+  return (
+    <div className="relative w-full sm:w-auto">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+        className="admin-select w-full sm:w-auto flex items-center justify-between gap-3 text-gray-700 font-medium hover:border-gray-300 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          {prefix && <span className="text-gray-400 font-medium">{prefix}</span>}
+          <span>{selectedLabel}</span>
+        </div>
+        <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <IoChevronDownOutline size={16} className="text-gray-400" />
+        </motion.div>
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="absolute top-full mt-2 left-0 w-full sm:w-48 bg-white border border-gray-100 rounded-3xl shadow-xl overflow-hidden z-[100] flex flex-col py-2"
+          >
+            {options.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                className={`text-left px-5 py-2.5 text-sm transition-colors hover:bg-gray-50 flex items-center gap-2 ${opt.value === value ? 'text-[#133020] font-semibold bg-[#133020]/5' : 'text-gray-600 font-medium'}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export default function Admin() {
   const [email, setEmail] = useState('');
@@ -1320,6 +1475,21 @@ export default function Admin() {
   const [authLoading, setAuthLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminRole, setAdminRole] = useState(null); // super_admin, app_admin, inquiry_admin
+
+  const navWithIcons = useMemo(() => {
+    const all = [
+      { id: "dashboard", label: "Dashboard", icon: <IoGridOutline size={20} /> },
+      { id: "applications", label: "Applications", icon: <IoDocumentTextOutline size={20} />, permission: 'app_admin' },
+      { id: "messages", label: "Messages", icon: <IoChatbubbleEllipsesOutline size={20} />, permission: 'inquiry_admin' },
+    ];
+    
+    if (adminRole === 'super_admin') return all;
+    if (adminRole === 'app_admin') return [all[0], all[1]];
+    if (adminRole === 'inquiry_admin') return [all[0], all[2]];
+    return [all[0]];
+  }, [adminRole]);
+
   const [applications, setApplications] = useState([]);
   const [messages, setMessages] = useState([]);
   const [actionMessage, setActionMessage] = useState(null);
@@ -1348,12 +1518,27 @@ export default function Admin() {
   const [appSearch, setAppSearch] = useState('');
   const [appStatusFilter, setAppStatusFilter] = useState('all');
   const [msgSearch, setMsgSearch] = useState('');
+  const [msgStatusFilter, setMsgStatusFilter] = useState('all');
+  const [msgSortOrder, setMsgSortOrder] = useState('date_desc');
+  const [msgDateFilter, setMsgDateFilter] = useState('all');
+  const [msgPage, setMsgPage] = useState(1);
   const [columnSorts, setColumnSorts] = useState({
     pending: 'date_asc',
     interview: 'date_asc',
     accepted: 'date_desc',
-    rejected: 'date_desc'
+    rejected: 'date_desc',
+    withdrew: 'date_desc',
   });
+  const [msgColumnSorts, setMsgColumnSorts] = useState({
+    new: 'date_asc',
+    replied: 'date_asc',
+    resolved: 'date_asc'
+  });
+  const [expandedColumn, setExpandedColumn] = useState(null);
+
+
+
+
 
   const nonDeletedApps = useMemo(() => applications.filter(a => !a.deleted), [applications]);
   const nonDeletedMsgs = useMemo(() => messages.filter(m => !m.deleted), [messages]);
@@ -1373,19 +1558,38 @@ export default function Admin() {
 
       if (!user) {
         setIsAdmin(false);
+        setAdminRole(null);
         setAuthLoading(false);
         return;
       }
 
-      const token = await user.getIdTokenResult();
+      const email = user.email ? user.email.toLowerCase() : '';
+      const emailAdmin = allowedAdminEmails.includes(email);
+      
+      const token = await getIdTokenResult(user);
       const claimAdmin = Boolean(token.claims.admin);
-      const emailAdmin = allowedAdminEmails.includes((user.email || '').toLowerCase());
       setIsAdmin(claimAdmin || emailAdmin);
+
+      // Determine specific role
+      if (email === 'lifewood.admin@gmail.com') {
+        setAdminRole('super_admin');
+      } else if (email === 'applicants@lifewood.com') {
+        setAdminRole('app_admin');
+      } else if (email === 'support@lifewood.com') {
+        setAdminRole('inquiry_admin');
+      } else if (claimAdmin || emailAdmin) {
+        setAdminRole('super_admin'); // Fallback for other admins
+      } else {
+        setAdminRole(null);
+      }
+
       setAuthLoading(false);
     });
 
     return () => unsubscribe();
   }, [allowedAdminEmails]);
+
+
 
   useEffect(() => {
     if (!isAdmin) return undefined;
@@ -1504,8 +1708,9 @@ export default function Admin() {
       });
 
       const appDoc = await getDoc(doc(db, 'applications', applicationId));
+      let applicantData = null;
       if (appDoc.exists()) {
-        const applicantData = appDoc.data();
+        applicantData = appDoc.data();
         const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
         const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
         const templateId = import.meta.env.VITE_EMAILJS_OUTCOME_TEMPLATE_ID;
@@ -1575,8 +1780,9 @@ export default function Admin() {
       setSchedulingApp(null);
 
       // Send Email Notification
+      let applicantData = null;
       if (appDocPre.exists()) {
-        const applicantData = appDocPre.data();
+        applicantData = appDocPre.data();
         const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
         const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
         const templateId = import.meta.env.VITE_EMAILJS_SCHEDULE_TEMPLATE_ID;
@@ -1717,6 +1923,19 @@ export default function Admin() {
     }
   };
 
+  const handleMessageStatusUpdate = async (messageId, status) => {
+    setActionMessage(null);
+    try {
+      await updateDoc(doc(db, 'messages', messageId), {
+        status,
+        updatedAt: serverTimestamp(),
+      });
+      setActionMessage({ text: `Message marked as ${status}.`, type: 'success' });
+    } catch (error) {
+      setActionMessage({ text: error?.message || 'Unable to update message status.', type: 'error' });
+    }
+  };
+
   const handleRestoreMessage = async (messageId) => {
     try {
       await updateDoc(doc(db, 'messages', messageId), {
@@ -1811,16 +2030,65 @@ export default function Admin() {
   }, [applications, appSearch, appStatusFilter]);
 
   const filteredMsgs = useMemo(() => {
-    return messages.filter((msg) => {
-      // Hide soft-deleted messages by default
-      if (msg.deleted) return false;
+    const now = new Date();
+    const oneDay = 24 * 60 * 60 * 1000;
+    const sevenDays = 7 * oneDay;
+    const thirtyDays = 30 * oneDay;
 
+    let result = messages.filter((msg) => {
       const term = msgSearch.toLowerCase();
-      return (msg.name || '').toLowerCase().includes(term) ||
+      const nMatch = (msg.name || '').toLowerCase().includes(term) ||
         (msg.email || '').toLowerCase().includes(term) ||
         (msg.subject || '').toLowerCase().includes(term);
+
+      if (msgStatusFilter === 'trash') {
+        if (!msg.deleted) return false;
+      } else {
+        if (msg.deleted) return false;
+      }
+
+      // If 'all', hide spam and show everything else. If specific filter, show only that.
+      const sMatch = msgStatusFilter === 'all' 
+        ? (msg.status !== 'spam') 
+        : (msgStatusFilter === 'trash' || msg.status === msgStatusFilter);
+      
+      if (!(nMatch && sMatch)) return false;
+
+      // Date Filtering
+      if (msgDateFilter !== 'all') {
+        const msgDate = msg.createdAt?.toDate ? msg.createdAt.toDate() : new Date(msg.createdAt || 0);
+        const diff = now - msgDate;
+        if (msgDateFilter === 'today' && diff > oneDay) return false;
+        if (msgDateFilter === 'week' && diff > sevenDays) return false;
+        if (msgDateFilter === 'month' && diff > thirtyDays) return false;
+      }
+
+      return true;
     });
-  }, [messages, msgSearch]);
+
+    // Sorting
+    result.sort((a, b) => {
+      const getTime = (val) => val?.toMillis ? val.toMillis() : (val instanceof Date ? val.getTime() : new Date(val || 0).getTime());
+      if (msgSortOrder === 'date_asc') return getTime(a.createdAt) - getTime(b.createdAt);
+      return getTime(b.createdAt) - getTime(a.createdAt);
+    });
+
+    return result;
+  }, [messages, msgSearch, msgStatusFilter, msgDateFilter, msgSortOrder]);
+
+  const { pagedMsgs, maxMsgPages } = useMemo(() => {
+    const start = (msgPage - 1) * 10;
+    const end = start + 10;
+    return {
+      pagedMsgs: filteredMsgs.slice(start, end),
+      maxMsgPages: Math.max(1, Math.ceil(filteredMsgs.length / 10))
+    };
+  }, [filteredMsgs, msgPage]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setMsgPage(1);
+  }, [msgSearch, msgStatusFilter, msgDateFilter]);
 
   const stats = useMemo(() => {
     const today = new Date();
@@ -1830,8 +2098,9 @@ export default function Admin() {
       totalApps: nonDeletedApps.length,
       acceptedApps: nonDeletedApps.filter(app => app.status === 'accepted').length,
       pendingApps: nonDeletedApps.filter((a) => a.status === 'pending').length,
+      resolvedInquiries: nonDeletedMsgs.filter(m => m.status === 'resolved').length,
       todayMsgs: nonDeletedMsgs.filter((m) => {
-        if (!m.createdAt) return false;
+        if (!m.createdAt || m.status === 'spam') return false;
         const d = m.createdAt.toDate ? m.createdAt.toDate() : new Date(m.createdAt);
         return d >= today;
       }).length,
@@ -2039,6 +2308,17 @@ export default function Admin() {
           <div className="w-8 border-t border-gray-200/50 my-2" />
 
           <button
+            onClick={() => setActiveTab('account')}
+            className={`flex items-center justify-center transition-all duration-300 w-12 h-12 rounded-full ${activeTab === 'account'
+              ? "bg-black text-white font-semibold scale-100"
+              : "text-gray-500 hover:bg-black/5 hover:text-gray-900"
+              }`}
+            title="Account Settings"
+          >
+            <IoPersonOutline size={20} />
+          </button>
+
+          <button
             onClick={() => setShowSignOutConfirm(true)}
             className="flex items-center justify-center transition-all duration-300 text-gray-500 hover:bg-black/5 hover:text-gray-900 w-12 h-12 rounded-full"
             title="Sign Out"
@@ -2070,8 +2350,8 @@ export default function Admin() {
           </div>
           <div className="scale-90 origin-right">
             <NotificationBell 
-              applications={applications} 
-              messages={messages} 
+              applications={adminRole === 'inquiry_admin' ? [] : applications} 
+              messages={adminRole === 'app_admin' ? [] : messages} 
               onItemClick={(item) => item.type === 'application' ? setSelectedAppDetails(item) : setSelectedMessage(item)}
             />
           </div>
@@ -2139,6 +2419,20 @@ export default function Admin() {
                 })}
 
                 <div className="w-full h-px bg-white/10 my-2"></div>
+
+                <button
+                  onClick={() => {
+                    setActiveTab('account');
+                    setMobileOpen(false);
+                  }}
+                  className={`flex items-center gap-4 px-5 py-3.5 rounded-2xl text-sm font-semibold transition-all text-left ${activeTab === 'account'
+                    ? "bg-white/20 text-white backdrop-blur-md border border-white/20"
+                    : "text-white/50 hover:bg-white/5 hover:text-white/90"
+                    }`}
+                >
+                  <IoPersonOutline size={18} />
+                  Account
+                </button>
 
                 <button
                   onClick={() => {
@@ -2217,8 +2511,8 @@ export default function Admin() {
             </div>
           </div>
           <NotificationBell 
-            applications={applications} 
-            messages={messages} 
+            applications={adminRole === 'inquiry_admin' ? [] : applications} 
+            messages={adminRole === 'app_admin' ? [] : messages} 
             onItemClick={(item) => item.type === 'application' ? setSelectedAppDetails(item) : setSelectedMessage(item)}
           />
         </header>
@@ -2229,6 +2523,7 @@ export default function Admin() {
                 isOpen={!!selectedMessage}
                 message={selectedMessage}
                 onClose={() => setSelectedMessage(null)}
+                onStatusUpdate={handleMessageStatusUpdate}
               />
             )}
             {actionMessage && (
@@ -2311,46 +2606,80 @@ export default function Admin() {
                       <p className="mt-4 text-sm font-medium text-gray-500 tracking-widest">Admin Dashboard</p>
                     </div>
 
-                    <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-10 w-full pt-8 border-t border-black/5">
-                      <div className="transition-all">
-                        <h3 className="text-[10px] font-bold text-black tracking-widest mb-2">Total Applications</h3>
-                        <div className="text-4xl font-bold text-gray-900 leading-none">{stats.totalApps}</div>
-                      </div>
-                      <div className="transition-all">
-                        <h3 className="text-[10px] font-bold text-black tracking-widest mb-2">Accepted Applicants</h3>
-                        <div className="text-4xl font-bold leading-none" style={{ color: '#133020' }}>{stats.acceptedApps}</div>
-                      </div>
-                      <div className="transition-all">
-                        <h3 className="text-[10px] font-bold text-black tracking-widest mb-2">Pending Review</h3>
-                        <div className="text-4xl font-bold text-gray-900 leading-none">{stats.pendingApps}</div>
-                      </div>
+                    <div className={`relative z-10 grid grid-cols-2 ${adminRole === 'super_admin' ? 'lg:grid-cols-4' : 'lg:grid-cols-2'} gap-10 w-full pt-8 border-t border-black/5`}>
+                      {(adminRole === 'super_admin' || adminRole === 'app_admin') && (
+                        <>
+                          <div className="transition-all">
+                            <h3 className="text-[10px] font-bold text-black tracking-widest mb-2">Total Applications</h3>
+                            <div className="text-4xl font-bold text-gray-900 leading-none">{stats.totalApps}</div>
+                          </div>
+                          <div className="transition-all">
+                            <h3 className="text-[10px] font-bold text-black tracking-widest mb-2">Accepted Applicants</h3>
+                            <div className="text-4xl font-bold leading-none" style={{ color: '#133020' }}>{stats.acceptedApps}</div>
+                          </div>
+                        </>
+                      )}
+                      {(adminRole === 'super_admin' || adminRole === 'app_admin') && (
+                        <div className="transition-all">
+                          <h3 className="text-[10px] font-bold text-black tracking-widest mb-2">Pending Review</h3>
+                          <div className="text-4xl font-bold text-gray-900 leading-none">{stats.pendingApps}</div>
+                        </div>
+                      )}
+                      {(adminRole === 'super_admin' || adminRole === 'inquiry_admin') && (
+                        <div className="transition-all">
+                          <h3 className="text-[10px] font-bold text-black tracking-widest mb-2">Resolved Inquiries</h3>
+                          <div className="text-4xl font-bold text-gray-900 leading-none">{stats.resolvedInquiries}</div>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-col xl:flex-row gap-6 w-full items-stretch xl:h-[340px] h-auto mb-6">
-                    <div className="flex-[3] min-w-0 h-full">
-                      <ActivityChart applications={nonDeletedApps} messages={nonDeletedMsgs} />
+                    <div className={`flex-[3] min-w-0 h-full ${adminRole !== 'super_admin' ? 'w-full' : ''}`}>
+                      <ActivityChart 
+                        applications={adminRole === 'inquiry_admin' ? [] : nonDeletedApps} 
+                        messages={adminRole === 'app_admin' ? [] : nonDeletedMsgs} 
+                      />
                     </div>
-                    <div className="flex-[2] min-w-0 h-full">
-                      <OutcomeChartWidget applications={nonDeletedApps} />
-                    </div>
+                    {adminRole !== 'inquiry_admin' && (
+                      <div className="flex-[2] min-w-0 h-full">
+                        <OutcomeChartWidget applications={nonDeletedApps} />
+                      </div>
+                    )}
                   </div>
-                  <RecentActivityCard
-                    title="Recent Applications"
-                    items={nonDeletedApps}
-                    type="application"
-                    onViewAll={() => setActiveTab('applications')}
-                  />
+                  <div className={`grid gap-6 ${adminRole === 'super_admin' ? 'grid-cols-1 xl:grid-cols-2' : 'grid-cols-1'}`}>
+                    {(adminRole === 'super_admin' || adminRole === 'app_admin') && (
+                      <RecentActivityCard
+                        title="Recent Applications"
+                        items={nonDeletedApps}
+                        type="application"
+                        onViewAll={() => setActiveTab('applications')}
+                      />
+                    )}
+                    {(adminRole === 'super_admin' || adminRole === 'inquiry_admin') && (
+                      <RecentActivityCard
+                        title="Recent Inquiries"
+                        items={nonDeletedMsgs.filter(m => m.status !== 'spam')}
+                        type="message"
+                        onViewAll={() => setActiveTab('messages')}
+                      />
+                    )}
+                  </div>
                 </div>
 
                 <div className="lg:col-span-1 w-full flex flex-col gap-6">
-                  <CalendarWidget applications={nonDeletedApps} messages={nonDeletedMsgs} />
-                  <ScheduledInterviewsCard interviews={upcomingInterviews} onItemClick={setSelectedAppDetails} />
+                  <CalendarWidget 
+                    applications={adminRole === 'inquiry_admin' ? [] : nonDeletedApps} 
+                    messages={adminRole === 'app_admin' ? [] : nonDeletedMsgs} 
+                  />
+                  {(adminRole === 'super_admin' || adminRole === 'app_admin') && (
+                    <ScheduledInterviewsCard interviews={upcomingInterviews} onItemClick={setSelectedAppDetails} />
+                  )}
                 </div>
               </div>
             </div>
           )}
 
-          {activeTab === 'applications' && (
+          {(activeTab === 'applications' && (adminRole === 'super_admin' || adminRole === 'app_admin')) && (
             <div className="flex flex-col gap-6">
               <div className="px-4 sm:px-0">
                 <h1 className="text-2xl font-bold text-gray-900 m-0">Applications</h1>
@@ -2377,12 +2706,13 @@ export default function Admin() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full items-start">
+              <div className={`grid gap-6 w-full items-start transition-all duration-300 ${expandedColumn ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
                 {[
                   { title: 'Applied', status: 'pending' },
                   { title: 'Interview', status: 'interview' },
                   { title: 'Accepted', status: 'accepted' },
                   { title: 'Rejected', status: 'rejected' },
+                  ...(appStatusFilter === 'withdrew' ? [{ title: 'Withdrew / Dropped Out', status: 'withdrew' }] : []),
                   ...(appStatusFilter === 'trash' ? [{ title: 'Trash', status: 'trash' }] : [])
                 ].map((col) => {
                   let items;
@@ -2403,39 +2733,138 @@ export default function Admin() {
                     return getTime(b.createdAt) - getTime(a.createdAt);
                   });
 
+                  const isExpanded = expandedColumn === col.status;
+                  const isHidden = expandedColumn !== null && !isExpanded;
+
                   return (
-                    <div key={col.status} className="flex flex-col gap-3">
+                    <div
+                      key={col.status}
+                      className={`flex flex-col gap-3 transition-all duration-300 ${isHidden ? 'hidden' : ''}`}
+                    >
                       <div className="flex items-center justify-between px-3">
                         <div className="flex items-center gap-2">
                           <h3 className="text-[11px] font-bold text-gray-400 tracking-widest">{col.title}</h3>
                           <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#FFB347] text-white`}>{items.length}</span>
                         </div>
-                        <ColumnSortSelect
-                          value={columnSorts[col.status]}
-                          onChange={(val) => setColumnSorts(prev => ({ ...prev, [col.status]: val }))}
-                        />
+                        <div className="flex items-center gap-2">
+                          <ColumnSortSelect
+                            value={columnSorts[col.status]}
+                            onChange={(val) => setColumnSorts(prev => ({ ...prev, [col.status]: val }))}
+                          />
+                          <button
+                            onClick={() => setExpandedColumn(isExpanded ? null : col.status)}
+                            className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-all active:scale-95"
+                            title={isExpanded ? 'Collapse column' : 'Expand column'}
+                          >
+                            {isExpanded ? <IoContractOutline size={14} /> : <IoExpandOutline size={14} />}
+                          </button>
+                        </div>
                       </div>
 
-                      <div className="flex flex-col h-[600px] bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden bg-white/50 backdrop-blur-sm">
-                        <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
+                      <div className={`bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden bg-white/50 backdrop-blur-sm ${isExpanded ? '' : 'flex flex-col h-[600px]'}`}>
+                        {/* Expanded column headers */}
+                        {isExpanded && (
+                          <div
+                            style={{ gridTemplateColumns: '200px 200px 220px 140px 110px 120px' }}
+                            className="grid items-center px-5 py-2.5 border-b border-gray-100 bg-gray-50/70 sticky top-0 gap-4"
+                          >
+                            <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Name</div>
+                            <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Position Applied</div>
+                            <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Email</div>
+                            <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Date Applied</div>
+                            <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Status</div>
+                            <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</div>
+                          </div>
+                        )}
+                        <div className={`pr-1 custom-scrollbar ${isExpanded ? 'overflow-y-auto max-h-[600px]' : 'flex-1 overflow-y-auto'}`}>
                           {items.length > 0 ? (
                             items.map((item, idx) => (
                               <div
                                 key={item.id}
                                 onClick={() => setSelectedAppDetails(item)}
-                                className={`p-5 hover:bg-black/5 transition-colors cursor-pointer group flex flex-col gap-3 ${idx !== items.length - 1 ? 'border-b border-gray-100' : ''}`}
+                                style={isExpanded ? { gridTemplateColumns: '200px 200px 220px 140px 110px 120px' } : {}}
+                                className={`hover:bg-black/5 transition-colors cursor-pointer group ${idx !== items.length - 1 ? 'border-b border-gray-100' : ''} ${isExpanded ? 'grid items-center gap-4 px-5 py-3' : 'p-5 flex flex-col gap-3'}`}
                               >
-                                <div className="flex items-center gap-3">
+                                {/* Avatar + Name */}
+                                <div className="flex items-center gap-3 overflow-hidden">
                                   <div className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center text-[10px] font-bold shrink-0 border border-black group-hover:scale-105 transition-transform">
                                     {item.firstName?.[0]}{item.lastName?.[0]}
                                   </div>
-                                  <div className="flex flex-col gap-0.5 overflow-hidden">
+                                  {isExpanded ? (
                                     <h4 className="font-bold text-gray-900 leading-tight truncate">{item.firstName} {item.lastName}</h4>
-                                    <p className="text-[10px] text-gray-400 font-bold tracking-wider truncate">{item.positionApplied}</p>
-                                  </div>
+                                  ) : (
+                                    <div className="flex flex-col gap-0.5 overflow-hidden">
+                                      <h4 className="font-bold text-gray-900 leading-tight truncate">{item.firstName} {item.lastName}</h4>
+                                      <p className="text-[10px] text-gray-400 font-bold tracking-wider truncate">{item.positionApplied}</p>
+                                    </div>
+                                  )}
                                 </div>
 
-                                {item.status === 'interview' && (
+                                {/* Position Applied column (expanded only) */}
+                                {isExpanded && (
+                                  <div className="overflow-hidden">
+                                    <p className="text-[11px] text-gray-500 font-bold tracking-wide truncate">{item.positionApplied}</p>
+                                  </div>
+                                )}
+
+                                {/* Email column (expanded only) */}
+                                {isExpanded && (
+                                  <div className="overflow-hidden">
+                                    <p className="text-[11px] text-gray-500 font-medium truncate">{item.emailAddress || <span className="text-gray-300">—</span>}</p>
+                                  </div>
+                                )}
+
+                                {/* Date Applied column (expanded only) */}
+                                {isExpanded && (
+                                  <div>
+                                    {(() => {
+                                      const d = item.createdAt?.toDate ? item.createdAt.toDate() : (item.createdAt ? new Date(item.createdAt) : null);
+                                      return d ? (
+                                        <span className="text-[11px] font-black text-gray-900">{d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                      ) : <span className="text-[11px] text-gray-300 font-bold">—</span>;
+                                    })()}
+                                  </div>
+                                )}
+
+                                {/* Status column (expanded only) */}
+                                {isExpanded && (
+                                  <div>
+                                    {(() => {
+                                      const s = item.deleted ? 'trash' : (item.status || 'pending');
+                                      const styles = {
+                                        pending:     'bg-blue-50 text-blue-600',
+                                        interview:   'bg-amber-50 text-amber-600',
+                                        accepted:    'bg-green-50 text-green-700',
+                                        rejected:    'bg-red-50 text-red-500',
+                                        withdrew:    'bg-purple-50 text-purple-600',
+                                        trash:       'bg-gray-100 text-gray-400',
+                                      };
+                                      const labels = {
+                                        pending:     'Applied',
+                                        interview:   'Interview',
+                                        accepted:    'Accepted',
+                                        rejected:    'Rejected',
+                                        withdrew:    'Withdrew / Dropped Out',
+                                        trash:       'Trash',
+                                      };
+                                      return (
+                                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${styles[s] || styles.pending}`}>
+                                          <span className={`w-1.5 h-1.5 rounded-full ${
+                                            s === 'pending' ? 'bg-blue-400' :
+                                            s === 'interview' ? 'bg-amber-400' :
+                                            s === 'accepted' ? 'bg-green-400' :
+                                            s === 'rejected' ? 'bg-red-400' :
+                                            s === 'withdrew' ? 'bg-purple-400' : 'bg-gray-300'
+                                          }`} />
+                                          {labels[s] || s}
+                                        </span>
+                                      );
+                                    })()}
+                                  </div>
+                                )}
+
+                                {/* Interview badge — collapsed card mode only */}
+                                {!isExpanded && item.status === 'interview' && (
                                   <div className="bg-gray-50 p-2 rounded-xl border border-gray-100">
                                     <div className="flex items-center gap-1 text-[9px] font-bold text-gray-500 mb-0.5">
                                       <IoTimeOutline size={10} strokeWidth={2} />
@@ -2445,86 +2874,97 @@ export default function Admin() {
                                   </div>
                                 )}
 
-                                <div className="flex flex-col gap-2 pt-1 border-t border-gray-50 mt-1">
-                                  <div className="flex items-center justify-end w-full">
-                                    <div className="flex gap-1">
-                                      {item.deleted ? (
-                                        <button
-                                          type="button"
-                                          className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-black hover:text-white rounded-full transition-all active:scale-95"
-                                          title="Restore Applicant"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleRestoreApplication(item.id);
-                                          }}
-                                        >
-                                          <IoChevronForwardOutline size={18} className="rotate-180" />
-                                        </button>
-                                      ) : (
-                                        <>
-                                          {(() => {
-                                            const scheduledDate = item.interviewScheduledAt?.toDate ? item.interviewScheduledAt.toDate() : (item.interviewScheduledAt ? new Date(item.interviewScheduledAt) : null);
-                                            const isUpcoming = scheduledDate && scheduledDate > new Date();
+                                {/* Action icons */}
+                                <div className={`flex items-center justify-end ${isExpanded ? '' : 'pt-1 border-t border-gray-50 mt-1'}`}>
+                                  <div className="flex gap-1">
+                                    {item.deleted ? (
+                                      <button
+                                        type="button"
+                                        className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-black hover:text-white rounded-full transition-all active:scale-95"
+                                        title="Restore Applicant"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleRestoreApplication(item.id);
+                                        }}
+                                      >
+                                        <IoChevronForwardOutline size={18} className="rotate-180" />
+                                      </button>
+                                    ) : (
+                                      <>
+                                        {(() => {
+                                          const scheduledDate = item.interviewScheduledAt?.toDate ? item.interviewScheduledAt.toDate() : (item.interviewScheduledAt ? new Date(item.interviewScheduledAt) : null);
+                                          const isUpcoming = scheduledDate && scheduledDate > new Date();
 
-                                            return (
-                                              <div className="flex gap-1">
-                                                {isUpcoming && (
-                                                  <button
-                                                    type="button"
-                                                    className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-orange-500 hover:text-white rounded-full transition-all active:scale-95"
-                                                    title="Reschedule Interview"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      setSchedulingApp(item);
-                                                    }}
-                                                  >
-                                                    <IoCalendarOutline size={18} />
-                                                  </button>
-                                                )}
-
-                                                {(item.status === 'pending' || (item.status === 'interview' && !isUpcoming && item.interviewType === 'pre-screening')) && (
-                                                  <button
-                                                    type="button"
-                                                    className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white rounded-full transition-all active:scale-95"
-                                                    title={item.status === 'interview' ? 'Schedule Final Interview' : 'Schedule Pre-screening'}
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      setSchedulingApp(item);
-                                                    }}
-                                                  >
-                                                    <IoCalendarOutline size={18} />
-                                                  </button>
-                                                )}
+                                          return (
+                                            <div className="flex gap-1">
+                                              {isUpcoming && (
                                                 <button
                                                   type="button"
-                                                  className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-green-600 hover:text-white rounded-full transition-all active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed"
-                                                  title={item.status === 'pending' ? 'Pre-screening required' : item.status === 'rejected' ? 'Cannot accept rejected applicant' : item.interviewType === 'pre-screening' ? 'Final Interview required' : 'Accept Applicant'}
+                                                  className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-orange-500 hover:text-white rounded-full transition-all active:scale-95"
+                                                  title="Reschedule Interview"
                                                   onClick={(e) => {
                                                     e.stopPropagation();
-                                                    setPendingDecision({ application: item, status: 'accepted' });
+                                                    setSchedulingApp(item);
                                                   }}
-                                                  disabled={item.status === 'pending' || (item.status === 'interview' && item.interviewType === 'pre-screening') || item.status === 'accepted' || item.status === 'rejected'}
                                                 >
-                                                  <IoCheckmarkCircleOutline size={18} />
+                                                  <IoCalendarOutline size={18} />
                                                 </button>
+                                              )}
+
+                                              {(item.status === 'pending' || (item.status === 'interview' && !isUpcoming && item.interviewType === 'pre-screening')) && (
                                                 <button
                                                   type="button"
-                                                  className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white rounded-full transition-all active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed"
-                                                  title="Reject Applicant"
+                                                  className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white rounded-full transition-all active:scale-95"
+                                                  title={item.status === 'interview' ? 'Schedule Final Interview' : 'Schedule Pre-screening'}
                                                   onClick={(e) => {
                                                     e.stopPropagation();
-                                                    setPendingDecision({ application: item, status: 'rejected' });
+                                                    setSchedulingApp(item);
                                                   }}
-                                                  disabled={item.status === 'rejected'}
                                                 >
-                                                  <IoCloseOutline size={20} />
+                                                  <IoCalendarOutline size={18} />
                                                 </button>
-                                              </div>
-                                            );
-                                          })()}
-                                        </>
-                                      )}
-                                    </div>
+                                              )}
+                                              <button
+                                                type="button"
+                                                className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-green-600 hover:text-white rounded-full transition-all active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed"
+                                                title={item.status === 'pending' ? 'Pre-screening required' : item.status === 'rejected' ? 'Cannot accept rejected applicant' : item.interviewType === 'pre-screening' ? 'Final Interview required' : 'Accept Applicant'}
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setPendingDecision({ application: item, status: 'accepted' });
+                                                }}
+                                                disabled={item.status === 'pending' || (item.status === 'interview' && item.interviewType === 'pre-screening') || item.status === 'accepted' || item.status === 'rejected' || item.status === 'withdrew'}
+                                              >
+                                                <IoCheckmarkCircleOutline size={18} />
+                                              </button>
+                                              <button
+                                                type="button"
+                                                className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white rounded-full transition-all active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed"
+                                                title="Reject Applicant"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setPendingDecision({ application: item, status: 'rejected' });
+                                                }}
+                                                disabled={item.status === 'rejected' || item.status === 'withdrew'}
+                                              >
+                                                <IoCloseOutline size={20} />
+                                              </button>
+                                              <button
+                                                type="button"
+                                                className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-purple-600 hover:text-white rounded-full transition-all active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed"
+                                                title="Mark as Withdrew / Dropped Out"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setPendingDecision({ application: item, status: 'withdrew' });
+                                                }}
+                                                disabled={item.status === 'withdrew' || item.status === 'accepted'}
+                                              >
+                                                <IoArrowBackOutline size={18} />
+                                              </button>
+                                            </div>
+                                          );
+                                        })()}
+                                      </>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -2544,6 +2984,206 @@ export default function Admin() {
             </div>
           )}
 
+          {(activeTab === 'messages' && (adminRole === 'super_admin' || adminRole === 'inquiry_admin')) && (
+            <div className="flex flex-col gap-6 w-full mx-auto">
+              <div className="px-4 sm:px-0">
+                <h1 className="text-3xl font-bold text-gray-900 m-0">Inquiries</h1>
+                <p className="text-gray-500 mt-2 font-medium">Manage and respond to contact form submissions.</p>
+              </div>
+
+              <div className="flex justify-end px-1 sm:px-0">
+                <div className="admin-filters !mb-0 !gap-3 w-full sm:w-auto flex flex-col sm:flex-row">
+                  <div className="relative flex-grow sm:w-[350px]">
+                    <IoSearchOutline className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <input
+                      type="text"
+                      placeholder="Search messages..."
+                      className="admin-search-input !pl-11 w-full"
+                      value={msgSearch}
+                      onChange={(e) => setMsgSearch(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="admin-select flex items-center gap-2 text-gray-400 group cursor-default">
+                      <IoFilterOutline size={16} />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">Filters</span>
+                    </div>
+
+                    <CustomMessageFilterSelect
+                      value={msgDateFilter}
+                      onChange={(val) => setMsgDateFilter(val)}
+                      prefix="Date:"
+                      options={[
+                        { value: 'all', label: 'All Time' },
+                        { value: 'today', label: 'Today' },
+                        { value: 'week', label: 'Past Week' },
+                        { value: 'month', label: 'Past Month' },
+                      ]}
+                    />
+
+                    <CustomMessageFilterSelect
+                      value={msgSortOrder}
+                      onChange={(val) => setMsgSortOrder(val)}
+                      prefix="Sort:"
+                      options={[
+                        { value: 'date_desc', label: 'Newest First' },
+                        { value: 'date_asc', label: 'Oldest First' },
+                      ]}
+                    />
+
+                    <CustomMessageStatusSelect
+                      value={msgStatusFilter}
+                      onChange={(val) => setMsgStatusFilter(val)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden mt-4">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50/50 border-b border-gray-100">
+                        <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Sender</th>
+                        <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Subject</th>
+                        <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
+                        <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Date</th>
+                        <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {pagedMsgs.length > 0 ? (
+                        pagedMsgs.map((item) => (
+                          <tr 
+                            key={item.id} 
+                            onClick={() => setSelectedMessage(item)}
+                            className="hover:bg-gray-50/30 transition-colors group cursor-pointer"
+                          >
+                            <td className="px-8 py-5">
+                              <div className="flex items-center gap-4">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-black shadow-lg shadow-black/5 transition-transform group-hover:scale-105 ${
+                                  item.status === 'resolved' ? 'bg-green-50 text-green-700' : 'bg-[#133020] text-white'
+                                }`}>
+                                  {item.name?.[0]?.toUpperCase() || 'U'}
+                                </div>
+                                <div className="flex flex-col min-w-0">
+                                  <span className="text-sm font-bold text-gray-900 truncate">{item.name}</span>
+                                  <span className="text-[10px] text-gray-400 font-bold truncate tracking-wide">{item.email}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-8 py-5">
+                              <span className="text-sm font-bold text-gray-900 truncate max-w-[240px] block">{item.subject}</span>
+                            </td>
+                            <td className="px-8 py-5">
+                              <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                                (item.status || 'new') === 'new' ? 'bg-blue-50 text-blue-600' :
+                                item.status === 'replied' ? 'bg-amber-50 text-amber-600' :
+                                item.status === 'spam' ? 'bg-red-50 text-red-600' :
+                                'bg-green-50 text-green-700'
+                              }`}>
+                                <span className={`w-1 h-1 rounded-full ${
+                                  (item.status || 'new') === 'new' ? 'bg-blue-400' :
+                                  item.status === 'replied' ? 'bg-amber-400' :
+                                  item.status === 'spam' ? 'bg-red-400' :
+                                  'bg-green-400'
+                                }`}></span>
+                                {item.status === 'new' ? 'Pending' : (item.status || 'new')}
+                              </span>
+                            </td>
+                            <td className="px-8 py-5 whitespace-nowrap">
+                              <div className="flex flex-col items-start font-sans">
+                                <span className="text-[11px] font-black text-gray-900">
+                                  {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'Today'}
+                                </span>
+                                <span className="text-[9px] text-gray-400 font-black uppercase tracking-tighter">
+                                  {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-8 py-5">
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setSelectedMessage(item); }}
+                                  className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-gray-100 rounded-full transition-all active:scale-95"
+                                  title="View Details"
+                                >
+                                  <IoSearchOutline size={18} />
+                                </button>
+                                {item.status !== 'resolved' && item.status !== 'spam' && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleMessageStatusUpdate(item.id, 'resolved'); }}
+                                    disabled={item.status !== 'replied'}
+                                    className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-green-600 hover:text-white rounded-full transition-all active:scale-95 shadow-sm disabled:opacity-20 disabled:cursor-not-allowed"
+                                    title={item.status !== 'replied' ? 'Reply required before resolving' : 'Mark Resolved'}
+                                  >
+                                    <IoCheckmarkCircleOutline size={18} />
+                                  </button>
+                                )}
+                                {item.status !== 'spam' && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleMessageStatusUpdate(item.id, 'spam'); }}
+                                    className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white rounded-full transition-all active:scale-95 shadow-sm"
+                                    title="Mark as Spam"
+                                  >
+                                    <IoWarningOutline size={18} />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="5" className="px-8 py-24 text-center">
+                            <div className="flex flex-col items-center justify-center opacity-10">
+                              <IoChatbubbleEllipsesOutline size={64} className="mb-6" />
+                              <p className="text-lg font-black tracking-[0.3em] uppercase">No Inquiries Found</p>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Controls */}
+                {maxMsgPages > 1 && (
+                  <div className="bg-gray-50/50 px-8 py-4 flex items-center justify-between border-t border-gray-100/50">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Showing</span>
+                      <div className="text-sm font-bold text-gray-900">
+                        {Math.min(filteredMsgs.length, (msgPage - 1) * 10 + 1)} - {Math.min(filteredMsgs.length, msgPage * 10)} 
+                        <span className="text-gray-400 font-medium ml-1">of {filteredMsgs.length} messages</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setMsgPage(prev => Math.max(1, prev - 1))}
+                        disabled={msgPage === 1}
+                        className="w-10 h-10 flex items-center justify-center bg-white border border-gray-100 rounded-2xl text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
+                      >
+                        <IoChevronBackOutline size={18} />
+                      </button>
+                      <div className="px-4 py-2 bg-white border border-gray-100 rounded-2xl text-[11px] font-black text-gray-900 shadow-sm">
+                        PAGE {msgPage} OF {maxMsgPages}
+                      </div>
+                      <button
+                        onClick={() => setMsgPage(prev => Math.min(maxMsgPages, prev + 1))}
+                        disabled={msgPage === maxMsgPages}
+                        className="w-10 h-10 flex items-center justify-center bg-white border border-gray-100 rounded-2xl text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
+                      >
+                        <IoChevronForwardOutline size={18} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+
+
           {activeTab === 'account' && (
             <div className="flex flex-col gap-6 max-w-4xl mx-auto md:mx-0">
               <div className="px-4 sm:px-0">
@@ -2554,7 +3194,7 @@ export default function Admin() {
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-4">
                 {/* Profile Card */}
                 <div className="lg:col-span-12 flex flex-col gap-6">
-                  <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm p-8 sm:p-10 flex flex-col sm:flex-row items-center sm:items-start gap-10">
+                  <div className="p-8 sm:p-10 flex flex-col sm:flex-row items-center sm:items-start gap-10">
                     <div className="relative group shrink-0">
                       <div className="w-40 h-40 rounded-full bg-gray-100 overflow-hidden border-[6px] border-white shadow-xl flex items-center justify-center relative">
                         {currentUser?.photoURL || newPhotoURL ? (
