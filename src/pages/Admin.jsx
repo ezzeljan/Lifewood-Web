@@ -523,9 +523,12 @@ function ApplicantDetailsModal({ isOpen, onClose, application, onDelete, onResch
                   { label: 'Pre-screening', id: 1, date: application.preScreeningDate || (application.status === 'interview' && application.interviewType === 'pre-screening' ? application.interviewScheduledAt : null) },
                   { label: 'Final Interview', id: 2, date: application.finalInterviewDate || (application.status === 'interview' && application.interviewType === 'interview' ? application.interviewScheduledAt : null) },
                   {
-                    label: application.status === 'rejected' ? 'Rejected' : (application.status === 'accepted' ? 'Hired' : (application.status === 'withdrew' ? 'Withdrew / Dropped Out' : 'Outcome')),
+                    label: application.status === 'rejected' ? 'Rejected' : 
+                           (application.status === 'accepted' ? 'Hired' : 
+                           (application.status === 'withdrew' ? 'Withdrew / Dropped Out' : 
+                           (application.status === 'deleted' ? 'Deleted' : 'Outcome'))),
                     id: 3,
-                    date: application.decisionAt || ((application.status === 'accepted' || application.status === 'rejected' || application.status === 'withdrew') ? application.updatedAt : null)
+                    date: application.deletedAt || application.decisionAt || ((application.status === 'accepted' || application.status === 'rejected' || application.status === 'withdrew' || application.status === 'deleted') ? application.updatedAt : null)
                   }
                 ];
 
@@ -543,10 +546,13 @@ function ApplicantDetailsModal({ isOpen, onClose, application, onDelete, onResch
                   const isRejected = step.id === 3 && application.status === 'rejected';
                   const isAccepted = step.id === 3 && application.status === 'accepted';
                   const isWithdrew = step.id === 3 && application.status === 'withdrew';
+                  const isDeleted = step.id === 3 && application.status === 'deleted';
 
                   let dotColor = isCurrent ? "bg-black text-white" : "bg-gray-200 text-gray-400";
-                  if (isCurrent && (isRejected || isAccepted || isWithdrew)) {
-                    dotColor = isRejected ? "bg-red-500 text-white" : (isAccepted ? "bg-green-600 text-white" : "bg-purple-600 text-white");
+                  if (isCurrent && (isRejected || isAccepted || isWithdrew || isDeleted)) {
+                    dotColor = isRejected ? "bg-red-500 text-white" : 
+                               (isAccepted ? "bg-green-600 text-white" : 
+                               (isWithdrew ? "bg-purple-600 text-white" : "bg-gray-500 text-white"));
                   }
                   if (!isCurrent) dotColor = "bg-green-50 text-green-700 shadow-sm border border-green-100"; // Previous is always "done"
 
@@ -556,7 +562,7 @@ function ApplicantDetailsModal({ isOpen, onClose, application, onDelete, onResch
                     <div key={idx} className="flex items-start gap-2 sm:gap-4">
                       {idx > 0 && <div className="w-4 sm:w-10 h-0.5 bg-gray-300 mt-5"></div>}
                       <div className="flex flex-col items-center gap-2">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all ${dotColor} ${isCurrent && !isRejected && !isAccepted && !isWithdrew ? 'ring-4 ring-black/10' : ''}`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all ${dotColor} ${isCurrent && !isRejected && !isAccepted && !isWithdrew && !isDeleted ? 'ring-4 ring-black/10' : ''}`}>
                           {!isCurrent ? <IoCheckmarkCircleOutline size={22} className="text-green-600" /> : step.id + 1}
                         </div>
                         <div className="flex flex-col items-center min-w-[70px] sm:min-w-[80px]">
@@ -2056,13 +2062,14 @@ export default function Admin() {
 
   const handleDeleteApplication = async (applicationId) => {
     try {
+      const app = applications.find(a => a.id === applicationId);
       await updateDoc(doc(db, 'applications', applicationId), {
         deleted: true,
+        status: 'deleted',
         deletedAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      const app = applications.find(a => a.id === applicationId);
-      await logAction('application_delete', applicationId, `${app?.firstName} ${app?.lastName}`);
+      await logAction('application_delete', applicationId, `${app?.firstName} ${app?.lastName}`, { originalStatus: app?.status });
       
       setSelectedAppDetails(null);
       setActionMessage({ text: 'Applicant moved to trash.', type: 'success' });
@@ -2073,11 +2080,12 @@ export default function Admin() {
 
   const handleRestoreApplication = async (applicationId) => {
     try {
+      const app = applications.find(a => a.id === applicationId);
       await updateDoc(doc(db, 'applications', applicationId), {
         deleted: false,
+        status: 'pending', // Default back to pending as the status was changed to 'deleted'
         updatedAt: serverTimestamp(),
       });
-      const app = applications.find(a => a.id === applicationId);
       await logAction('application_restore', applicationId, `${app?.firstName} ${app?.lastName}`);
 
       setActionMessage({ text: 'Applicant restored successfully.', type: 'success' });
@@ -2088,13 +2096,14 @@ export default function Admin() {
 
   const handleDeleteMessage = async (messageId) => {
     try {
+      const msg = messages.find(m => m.id === messageId);
       await updateDoc(doc(db, 'messages', messageId), {
         deleted: true,
+        status: 'deleted',
         deletedAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      const msg = messages.find(m => m.id === messageId);
-      await logAction('message_delete', messageId, msg?.name, { subject: msg?.subject });
+      await logAction('message_delete', messageId, msg?.name, { subject: msg?.subject, originalStatus: msg?.status });
 
       setActionMessage({ text: 'Message moved to trash.', type: 'success' });
     } catch (error) {
@@ -2120,11 +2129,12 @@ export default function Admin() {
 
   const handleRestoreMessage = async (messageId) => {
     try {
+      const msg = messages.find(m => m.id === messageId);
       await updateDoc(doc(db, 'messages', messageId), {
         deleted: false,
+        status: 'new', // Default back to new as the status was changed to 'deleted'
         updatedAt: serverTimestamp(),
       });
-      const msg = messages.find(m => m.id === messageId);
       await logAction('message_restore', messageId, msg?.name, { subject: msg?.subject });
 
       setActionMessage({ text: 'Message restored successfully.', type: 'success' });
@@ -2153,6 +2163,7 @@ export default function Admin() {
           try {
             await updateDoc(doc(db, 'applications', app.id), {
               deleted: true,
+              status: 'deleted',
               deletedAt: serverTimestamp(),
               updatedAt: serverTimestamp(),
               autoCleaned: true

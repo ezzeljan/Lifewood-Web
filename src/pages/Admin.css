@@ -170,6 +170,16 @@
   color: #dc2626;
 }
 
+.status-badge.deleted {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.status-badge.withdrew {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
 .action-buttons {
   display: flex;
   gap: 0.5rem;
