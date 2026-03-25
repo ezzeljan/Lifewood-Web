@@ -1468,6 +1468,133 @@ function CustomMessageFilterSelect({ value, onChange, options, prefix }) {
   );
 }
 
+function LogDetailsModal({ isOpen, onClose, log }) {
+  if (!isOpen || !log) return null;
+
+  const formatDate = (timestamp) => {
+    if (!timestamp) return 'Pending';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleString(undefined, {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+  };
+
+  const actionColors = {
+    status_update: 'bg-blue-50 text-blue-600',
+    interview_schedule: 'bg-amber-50 text-amber-600',
+    interview_reschedule: 'bg-orange-50 text-orange-600',
+    application_delete: 'bg-red-50 text-red-600',
+    application_restore: 'bg-green-50 text-green-600',
+    message_delete: 'bg-red-50 text-red-600',
+    message_status_update: 'bg-blue-50 text-blue-600',
+    message_restore: 'bg-green-50 text-green-600',
+  };
+
+  return (
+    <div className="fixed inset-0 z-[2200] flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+        className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl overflow-hidden border border-gray-100 p-10"
+      >
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+             <div className="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center text-lg font-black shadow-lg">
+                {log.adminEmail?.[0].toUpperCase()}
+             </div>
+             <div>
+                <h3 className="text-xl font-bold text-gray-900 leading-tight">Activity Details</h3>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-1">Audit Log Entry</p>
+             </div>
+          </div>
+          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition-colors">
+            <IoCloseOutline size={24} />
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-6">
+          <div className="p-6 bg-gray-50 rounded-[32px] border border-gray-100 flex flex-col gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Administrator</span>
+                <span className="text-sm font-bold text-gray-900 truncate">{log.adminEmail}</span>
+                <span className="text-[9px] font-bold text-[#133020] uppercase tracking-wider bg-[#133020]/5 px-2 py-0.5 rounded-full w-fit mt-1">
+                  {log.adminRole?.replace('_', ' ')}
+                </span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Timestamp</span>
+                <span className="text-sm font-bold text-gray-900 leading-tight whitespace-pre-wrap">{formatDate(log.timestamp)}</span>
+              </div>
+            </div>
+            
+            <div className="h-px bg-gray-200/50 w-full" />
+
+            <div className="flex flex-col gap-2">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Action Performed</span>
+              <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${actionColors[log.actionType] || 'bg-gray-50 text-gray-600 border-gray-200'}`}>
+                <IoPulseOutline size={18} />
+                <span className="text-sm font-black uppercase tracking-wider">{log.actionType?.replace(/_/g, ' ')}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 p-1">
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Target Information</span>
+            <div className="flex flex-col gap-4 p-6 bg-white border border-gray-100 rounded-[32px] shadow-sm">
+              <div className="flex items-center gap-4">
+                 <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
+                    <IoPersonOutline size={20} />
+                 </div>
+                 <div className="flex flex-col overflow-hidden">
+                    <span className="text-base font-bold text-gray-900 truncate">{log.targetName}</span>
+                    <span className="text-xs text-gray-400 font-medium truncate">ID: {log.targetId}</span>
+                 </div>
+              </div>
+
+              {log.details && Object.keys(log.details).length > 0 && (
+                <div className="mt-2 flex flex-col gap-3">
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Metadata</span>
+                  <div className="grid grid-cols-2 gap-3">
+                    {Object.entries(log.details).map(([key, value]) => (
+                      <div key={key} className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col gap-0.5">
+                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter capitalize">{key.replace(/_/g, ' ')}</span>
+                        <span className="text-xs font-bold text-gray-800 truncate">{String(value)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <button 
+          onClick={onClose}
+          className="w-full mt-10 py-4 bg-black hover:bg-gray-800 text-white rounded-full text-sm font-bold shadow-xl transition-all active:scale-95"
+        >
+          Close Log Details
+        </button>
+      </motion.div>
+    </div>
+  );
+}
+
 export default function Admin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -1515,6 +1642,7 @@ export default function Admin() {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [deleteConfirmApp, setDeleteConfirmApp] = useState(null);
   const [pendingDecision, setPendingDecision] = useState(null); // { application, status }
+  const [selectedLog, setSelectedLog] = useState(null);
 
   // Filters
   const [appSearch, setAppSearch] = useState('');
@@ -2125,6 +2253,11 @@ export default function Admin() {
 
     // Sorting
     result.sort((a, b) => {
+      // Primary sort: status (resolved at the bottom)
+      if (a.status === 'resolved' && b.status !== 'resolved') return 1;
+      if (a.status !== 'resolved' && b.status === 'resolved') return -1;
+
+      // Secondary sort: date
       const getTime = (val) => val?.toMillis ? val.toMillis() : (val instanceof Date ? val.getTime() : new Date(val || 0).getTime());
       if (msgSortOrder === 'date_asc') return getTime(a.createdAt) - getTime(b.createdAt);
       return getTime(b.createdAt) - getTime(a.createdAt);
@@ -3262,7 +3395,7 @@ export default function Admin() {
                     <tbody className="divide-y divide-gray-50">
                       {activityLogs.length > 0 ? (
                         activityLogs.map((log) => (
-                          <tr key={log.id} className="hover:bg-gray-50/30 transition-colors group">
+                          <tr key={log.id} onClick={() => setSelectedLog(log)} className="hover:bg-gray-50/30 transition-colors group cursor-pointer">
                             <td className="px-8 py-6">
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-[10px] font-black">
@@ -3407,6 +3540,14 @@ export default function Admin() {
               </div>
             </div>
           )}
+
+          <AnimatePresence>
+            <LogDetailsModal 
+              isOpen={!!selectedLog} 
+              onClose={() => setSelectedLog(null)} 
+              log={selectedLog} 
+            />
+          </AnimatePresence>
 
         </main>
       </div>
