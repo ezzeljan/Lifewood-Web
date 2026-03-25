@@ -1510,9 +1510,9 @@ function LogDetailsModal({ isOpen, onClose, log }) {
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl overflow-hidden border border-gray-100 p-10"
+        className="relative w-full max-w-lg bg-white rounded-[32px] sm:rounded-[40px] shadow-2xl overflow-hidden border border-gray-100 p-6 sm:p-10"
       >
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
           <div className="flex items-center gap-4">
              <div className="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center text-lg font-black shadow-lg">
                 {log.adminEmail?.[0].toUpperCase()}
@@ -1527,12 +1527,12 @@ function LogDetailsModal({ isOpen, onClose, log }) {
           </button>
         </div>
 
-        <div className="flex flex-col gap-6">
-          <div className="p-6 bg-gray-50 rounded-[32px] border border-gray-100 flex flex-col gap-4">
-            <div className="grid grid-cols-2 gap-4">
+        <div className="flex flex-col gap-6 overflow-y-auto max-h-[50vh] sm:max-h-[60vh] pr-2 custom-scrollbar">
+          <div className="p-5 sm:p-6 bg-gray-50 rounded-[32px] border border-gray-100 flex flex-col gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1">
                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Administrator</span>
-                <span className="text-sm font-bold text-gray-900 truncate">{log.adminEmail}</span>
+                <span className="text-sm font-bold text-gray-900 break-all">{log.adminEmail}</span>
                 <span className="text-[9px] font-bold text-[#133020] uppercase tracking-wider bg-[#133020]/5 px-2 py-0.5 rounded-full w-fit mt-1">
                   {log.adminRole?.replace('_', ' ')}
                 </span>
@@ -1561,20 +1561,20 @@ function LogDetailsModal({ isOpen, onClose, log }) {
                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
                     <IoPersonOutline size={20} />
                  </div>
-                 <div className="flex flex-col overflow-hidden">
+                 <div className="flex flex-col min-w-0">
                     <span className="text-base font-bold text-gray-900 truncate">{log.targetName}</span>
-                    <span className="text-xs text-gray-400 font-medium truncate">ID: {log.targetId}</span>
+                    <span className="text-xs text-gray-400 font-medium break-all">ID: {log.targetId}</span>
                  </div>
               </div>
 
               {log.details && Object.keys(log.details).length > 0 && (
                 <div className="mt-2 flex flex-col gap-3">
                   <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Metadata</span>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {Object.entries(log.details).map(([key, value]) => (
                       <div key={key} className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col gap-0.5">
                         <span className="text-[9px] font-black text-gray-400 uppercase tracking-tighter capitalize">{key.replace(/_/g, ' ')}</span>
-                        <span className="text-xs font-bold text-gray-800 truncate">{String(value)}</span>
+                        <span className="text-xs font-bold text-gray-800 break-all">{String(value)}</span>
                       </div>
                     ))}
                   </div>
@@ -1701,7 +1701,7 @@ export default function Admin() {
       setIsAdmin(claimAdmin || emailAdmin);
 
       // Determine specific role
-      if (email === 'lifewood.admin@gmail.com') {
+      if (email === 'admin@lifewood.com') {
         setAdminRole('super_admin');
       } else if (email === 'applicants@lifewood.com') {
         setAdminRole('app_admin');

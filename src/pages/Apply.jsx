@@ -354,7 +354,7 @@ export default function Apply() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden p-8 flex flex-col items-center text-center font-sans z-10 border border-gray-100"
+              className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden p-6 sm:p-8 flex flex-col items-center text-center font-sans z-10 border border-gray-100"
             >
               <button
                 onClick={closeModal}
@@ -397,7 +397,7 @@ export default function Apply() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden p-8 flex flex-col items-center text-center font-sans z-10 border border-gray-100"
+              className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden p-6 sm:p-8 flex flex-col items-center text-center font-sans z-10 border border-gray-100"
             >
               <button
                 onClick={() => setRestrictionReason('')}

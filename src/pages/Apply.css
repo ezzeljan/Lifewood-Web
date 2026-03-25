@@ -242,25 +242,70 @@
 }
 
 @media (max-width: 768px) {
+  .apply-page {
+    padding-top: 5rem;
+  }
+
   .apply-header {
     padding: 0 1rem;
+    margin-bottom: 2rem;
   }
   
   .apply-header h1 {
-    font-size: 2.25rem;
+    font-size: 2rem;
+    letter-spacing: -1px;
+  }
+
+  .apply-header p {
+    font-size: 1rem;
   }
 
   .apply-grid {
     grid-template-columns: 1fr;
-    gap: 0;
+    gap: 1.25rem;
   }
 
   .apply-form {
-    padding: 2rem 1.5rem;
+    padding: 2rem 1.25rem;
     border-radius: 20px;
+    margin: 0 1rem;
+  }
+
+  .upload-zone {
+    padding: 2.5rem 1.5rem;
   }
 
   .file-details .file-name {
-    max-width: 150px;
+    max-width: 140px;
+  }
+}
+
+@media (max-width: 480px) {
+  .apply-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .apply-form {
+    padding: 1.5rem 1rem;
+    margin: 0 0.75rem;
+  }
+  
+  .upload-zone {
+    padding: 2rem 1rem;
+  }
+
+  .file-icon {
+    padding: 8px;
+  }
+  
+  .file-details .file-name {
+    max-width: 120px;
+    font-size: 0.85rem;
+  }
+
+  .apply-message {
+    font-size: 0.9rem;
+    padding: 0 0.5rem;
+    margin-top: 1rem;
   }
 }
