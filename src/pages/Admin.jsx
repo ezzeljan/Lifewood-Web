@@ -1482,6 +1482,7 @@ export default function Admin() {
       { id: "dashboard", label: "Dashboard", icon: <IoGridOutline size={20} /> },
       { id: "applications", label: "Applications", icon: <IoDocumentTextOutline size={20} />, permission: 'app_admin' },
       { id: "messages", label: "Messages", icon: <IoChatbubbleEllipsesOutline size={20} />, permission: 'inquiry_admin' },
+      { id: "logs", label: "Activity Logs", icon: <IoListOutline size={20} />, permission: 'super_admin' },
     ];
     
     if (adminRole === 'super_admin') return all;
@@ -1492,6 +1493,7 @@ export default function Admin() {
 
   const [applications, setApplications] = useState([]);
   const [messages, setMessages] = useState([]);
+  const [activityLogs, setActivityLogs] = useState([]);
   const [actionMessage, setActionMessage] = useState(null);
   const [isDataLoading, setIsDataLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -1590,6 +1592,36 @@ export default function Admin() {
   }, [allowedAdminEmails]);
 
 
+
+  useEffect(() => {
+    if (!isAdmin || adminRole !== 'super_admin') return undefined;
+
+    const logsQuery = query(collection(db, 'activity_logs'), orderBy('timestamp', 'desc'), limit(100));
+    const unsubLogs = onSnapshot(logsQuery, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setActivityLogs(docs);
+    });
+
+    return () => unsubLogs();
+  }, [isAdmin, adminRole]);
+
+  const logAction = async (actionType, targetId, targetName, details = {}) => {
+    try {
+      if (!currentUser?.email) return;
+      
+      await addDoc(collection(db, 'activity_logs'), {
+        adminEmail: currentUser.email,
+        adminRole: adminRole,
+        actionType,
+        targetId,
+        targetName,
+        details,
+        timestamp: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('Error logging action:', error);
+    }
+  };
 
   useEffect(() => {
     if (!isAdmin) return undefined;
@@ -1745,6 +1777,9 @@ export default function Admin() {
         } else {
           console.warn('EmailJS: Missing configuration for status update email', { serviceId, templateId, publicKey });
         }
+
+        // Log the action
+        await logAction('status_update', applicationId, `${applicantData.firstName} ${applicantData.lastName}`, { status });
       }
       setActionMessage({ text: `Application marked as ${status}.`, type: 'success' });
     } catch (error) {
@@ -1871,6 +1906,13 @@ export default function Admin() {
         } else {
           console.warn('EmailJS: Missing configuration for schedule interview email', { serviceId, templateId, publicKey });
         }
+
+        // Log the action
+        await logAction(isRescheduling ? 'interview_reschedule' : 'interview_schedule', applicationId, `${applicantData.firstName} ${applicantData.lastName}`, { 
+          type: scheduleData.type, 
+          date: scheduleData.date, 
+          time: scheduleData.time 
+        });
       }
 
       setActionMessage({
@@ -1891,6 +1933,9 @@ export default function Admin() {
         deletedAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
+      const app = applications.find(a => a.id === applicationId);
+      await logAction('application_delete', applicationId, `${app?.firstName} ${app?.lastName}`);
+      
       setSelectedAppDetails(null);
       setActionMessage({ text: 'Applicant moved to trash.', type: 'success' });
     } catch (error) {
@@ -1904,6 +1949,9 @@ export default function Admin() {
         deleted: false,
         updatedAt: serverTimestamp(),
       });
+      const app = applications.find(a => a.id === applicationId);
+      await logAction('application_restore', applicationId, `${app?.firstName} ${app?.lastName}`);
+
       setActionMessage({ text: 'Applicant restored successfully.', type: 'success' });
     } catch (error) {
       setActionMessage({ text: error?.message || 'Unable to restore applicant.', type: 'error' });
@@ -1917,6 +1965,9 @@ export default function Admin() {
         deletedAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
+      const msg = messages.find(m => m.id === messageId);
+      await logAction('message_delete', messageId, msg?.name, { subject: msg?.subject });
+
       setActionMessage({ text: 'Message moved to trash.', type: 'success' });
     } catch (error) {
       setActionMessage({ text: error?.message || 'Unable to move message to trash.', type: 'error' });
@@ -1930,6 +1981,9 @@ export default function Admin() {
         status,
         updatedAt: serverTimestamp(),
       });
+      const msg = messages.find(m => m.id === messageId);
+      await logAction('message_status_update', messageId, msg?.name, { status, subject: msg?.subject });
+
       setActionMessage({ text: `Message marked as ${status}.`, type: 'success' });
     } catch (error) {
       setActionMessage({ text: error?.message || 'Unable to update message status.', type: 'error' });
@@ -1942,6 +1996,9 @@ export default function Admin() {
         deleted: false,
         updatedAt: serverTimestamp(),
       });
+      const msg = messages.find(m => m.id === messageId);
+      await logAction('message_restore', messageId, msg?.name, { subject: msg?.subject });
+
       setActionMessage({ text: 'Message restored successfully.', type: 'success' });
     } catch (error) {
       setActionMessage({ text: error?.message || 'Unable to restore message.', type: 'error' });
@@ -3178,6 +3235,94 @@ export default function Admin() {
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+
+
+          {activeTab === 'logs' && adminRole === 'super_admin' && (
+            <div className="flex flex-col gap-6 w-full mx-auto">
+              <div className="px-4 sm:px-0">
+                <h1 className="text-3xl font-bold text-gray-900 m-0">Activity Logs</h1>
+                <p className="text-gray-500 mt-2 font-medium">Real-time audit trail of administrative actions.</p>
+              </div>
+
+              <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden mt-4">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50/50 border-b border-gray-100">
+                        <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Administrator</th>
+                        <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Action</th>
+                        <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Target</th>
+                        <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Timestamp</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {activityLogs.length > 0 ? (
+                        activityLogs.map((log) => (
+                          <tr key={log.id} className="hover:bg-gray-50/30 transition-colors group">
+                            <td className="px-8 py-6">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-[10px] font-black">
+                                  {log.adminEmail?.[0].toUpperCase()}
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-bold text-gray-900">{log.adminEmail}</span>
+                                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{log.adminRole?.replace('_', ' ')}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-8 py-6">
+                              <div className="flex items-center gap-2">
+                                <div className={`w-2 h-2 rounded-full ${
+                                  log.actionType?.includes('delete') ? 'bg-red-500' :
+                                  log.actionType?.includes('status') ? 'bg-blue-500' :
+                                  log.actionType?.includes('schedule') ? 'bg-amber-500' :
+                                  'bg-green-500'
+                                }`} />
+                                <span className="text-sm font-semibold text-gray-700 capitalize">
+                                  {log.actionType?.replace(/_/g, ' ')}
+                                </span>
+                              </div>
+                              {log.details?.status && (
+                                <span className="text-[10px] font-bold text-gray-400 ml-4">
+                                  to {log.details.status}
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-8 py-6">
+                              <div className="flex flex-col">
+                                <span className="text-sm font-bold text-gray-900 truncate max-w-[200px]">{log.targetName}</span>
+                                <span className="text-[10px] text-gray-400 font-medium">ID: {log.targetId?.slice(0, 8)}...</span>
+                              </div>
+                            </td>
+                            <td className="px-8 py-6 whitespace-nowrap">
+                              <div className="flex flex-col font-sans">
+                                <span className="text-[11px] font-black text-gray-900">
+                                  {log.timestamp?.toDate ? log.timestamp.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Pending'}
+                                </span>
+                                <span className="text-[9px] text-gray-400 font-black uppercase tracking-tighter">
+                                  {log.timestamp?.toDate ? log.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : ''}
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="4" className="px-8 py-24 text-center">
+                            <div className="flex flex-col items-center justify-center opacity-10">
+                              <IoListOutline size={64} className="mb-6" />
+                              <p className="text-lg font-black tracking-[0.3em] uppercase">No Activity Logs</p>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
