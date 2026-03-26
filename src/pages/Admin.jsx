@@ -27,16 +27,34 @@ function CalendarWidget({ applications, messages }) {
 
   const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const dayNames = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
   const handlePrevMonth = () => setDate(new Date(currentYear, currentMonth - 1, 1));
   const handleNextMonth = () => setDate(new Date(currentYear, currentMonth + 1, 1));
+  const handleMonthChange = (e) => setDate(new Date(currentYear, parseInt(e.target.value), 1));
+  const handleYearChange = (e) => setDate(new Date(parseInt(e.target.value), currentMonth, 1));
 
   const today = new Date();
 
   return (
     <div className="admin-card w-full !m-0 flex flex-col shadow-sm border border-gray-100">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold text-gray-800 !mb-0">{monthNames[currentMonth]} {currentYear}</h3>
+        <div className="flex items-center gap-1.5">
+          <select 
+            value={currentMonth} 
+            onChange={handleMonthChange}
+            className="text-sm font-bold bg-gray-50 border border-gray-100 rounded-xl px-3 py-1.5 outline-none text-gray-700 focus:border-black focus:bg-white transition-all cursor-pointer hover:shadow-sm"
+          >
+            {monthNames.map((name, i) => <option key={name} value={i} className="text-sm font-bold">{name}</option>)}
+          </select>
+          <select 
+            value={currentYear} 
+            onChange={handleYearChange}
+            className="text-sm font-bold bg-gray-50 border border-gray-100 rounded-xl px-3 py-1.5 outline-none text-gray-700 focus:border-black focus:bg-white transition-all cursor-pointer hover:shadow-sm"
+          >
+            {years.map(y => <option key={y} value={y} className="text-sm font-bold">{y}</option>)}
+          </select>
+        </div>
         <div className="flex gap-1">
           <button onClick={handlePrevMonth} className="p-2 rounded-xl hover:bg-gray-100 text-gray-600 transition-colors"><IoChevronBackOutline size={18} /></button>
           <button onClick={handleNextMonth} className="p-2 rounded-xl hover:bg-gray-100 text-gray-600 transition-colors"><IoChevronForwardOutline size={18} /></button>
@@ -120,9 +138,11 @@ function CalendarWidget({ applications, messages }) {
 }
 
 function ActivityChart({ applications, messages }) {
+  const [selectedWeekDate, setSelectedWeekDate] = useState(new Date());
+
   const chartData = useMemo(() => {
     const days = [];
-    const now = new Date();
+    const now = selectedWeekDate;
     const currentDay = now.getDay(); // 0 (Sun) to 6 (Sat)
     const daysSinceMonday = currentDay === 0 ? 6 : currentDay - 1;
 
@@ -165,22 +185,83 @@ function ActivityChart({ applications, messages }) {
     });
 
     return days;
-  }, [applications, messages]);
+  }, [applications, messages, selectedWeekDate]);
 
   const maxVal = Math.max(...chartData.map(d => d.apps + d.msgs), 5); // Minimum 5 for scale
 
   return (
     <div className="admin-card w-full h-full !m-0 flex flex-col shadow-sm border border-gray-100">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-bold text-gray-800 !mb-0">Weekly Activity</h3>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#133020]"></span>
-            <span className="text-[10px] font-semibold text-gray-500 tracking-wider">Apps</span>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div className="flex flex-col gap-1">
+          <h3 className="text-lg font-bold text-gray-800 !mb-0">Weekly Activity</h3>
+          <span className="text-[10px] font-bold text-gray-400 tracking-wider">
+            Week of {chartData[0].date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - {chartData[6].date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+          </span>
+        </div>
+        
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Week Jump Selectors */}
+          <div className="flex items-center gap-1">
+            <select 
+              value={selectedWeekDate.getMonth()} 
+              onChange={(e) => {
+                const newDate = new Date(selectedWeekDate);
+                newDate.setMonth(parseInt(e.target.value));
+                setSelectedWeekDate(newDate);
+              }}
+              className="text-[10px] font-black uppercase tracking-wider bg-gray-50 border border-gray-100 rounded-xl px-2 py-1.5 outline-none text-gray-500 cursor-pointer hover:text-black hover:bg-white hover:shadow-sm transition-all"
+            >
+              {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map((name, i) => (
+                <option key={name} value={i}>{name}</option>
+              ))}
+            </select>
+            <select 
+              value={selectedWeekDate.getFullYear()} 
+              onChange={(e) => {
+                const newDate = new Date(selectedWeekDate);
+                newDate.setFullYear(parseInt(e.target.value));
+                setSelectedWeekDate(newDate);
+              }}
+              className="text-[10px] font-black uppercase tracking-wider bg-gray-50 border border-gray-100 rounded-xl px-2 py-1.5 outline-none text-gray-500 cursor-pointer hover:text-black hover:bg-white hover:shadow-sm transition-all"
+            >
+              {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#ffb347]"></span>
-            <span className="text-[10px] font-semibold text-gray-500 tracking-wider">Messages</span>
+
+          <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100">
+            <button 
+              onClick={() => setSelectedWeekDate(new Date(selectedWeekDate.getTime() - 7 * 24 * 60 * 60 * 1000))}
+              className="p-1.5 hover:bg-white hover:shadow-sm rounded-lg text-gray-500 transition-all"
+              title="Previous Week"
+            >
+              <IoChevronBackOutline size={14} />
+            </button>
+            <button 
+              onClick={() => setSelectedWeekDate(new Date())}
+              className="px-2 py-1 text-[9px] font-black uppercase tracking-widest text-gray-400 hover:text-black transition-colors"
+            >
+              Current
+            </button>
+            <button 
+              onClick={() => setSelectedWeekDate(new Date(selectedWeekDate.getTime() + 7 * 24 * 60 * 60 * 1000))}
+              className="p-1.5 hover:bg-white hover:shadow-sm rounded-lg text-gray-500 transition-all"
+              title="Next Week"
+            >
+              <IoChevronForwardOutline size={14} />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100">
+            <div className="flex items-center gap-1.5 sm:flex hidden">
+              <span className="w-2 h-2 rounded-full bg-[#133020]"></span>
+              <span className="text-[9px] font-black text-gray-400 tracking-wider">APPS</span>
+            </div>
+            <div className="flex items-center gap-1.5 sm:flex hidden">
+              <span className="w-2 h-2 rounded-full bg-[#ffb347]"></span>
+              <span className="text-[9px] font-black text-gray-400 tracking-wider">MSGS</span>
+            </div>
           </div>
         </div>
       </div>
@@ -238,88 +319,108 @@ function ActivityChart({ applications, messages }) {
 }
 
 function OutcomeChartWidget({ applications }) {
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
   const stats = useMemo(() => {
     let accepted = 0;
     let rejected = 0;
     (applications || []).forEach(app => {
-      if (app.status === 'accepted') accepted++;
-      if (app.status === 'rejected') rejected++;
+      const appDate = app.createdAt?.toDate ? app.createdAt.toDate() : new Date(app.createdAt || 0);
+      if (appDate.getMonth() === selectedMonth && appDate.getFullYear() === selectedYear) {
+        if (app.status === 'accepted') accepted++;
+        if (app.status === 'rejected') rejected++;
+      }
     });
     const total = accepted + rejected;
     return { accepted, rejected, total };
-  }, [applications]);
+  }, [applications, selectedMonth, selectedYear]);
 
-  if (stats.total === 0) {
-    return (
-      <div className="admin-card w-full h-full flex flex-col justify-center items-center shadow-sm border border-gray-100 p-8">
-        <h3 className="text-lg font-bold text-gray-800 mb-6 w-full text-left">Outcome Rate</h3>
-        <div className="flex-1 flex flex-col items-center justify-center opacity-40">
-          <IoCheckmarkCircleOutline size={32} className="mb-2" />
-          <span className="text-xs font-bold tracking-widest text-center mt-2">No Outcome Data Yet</span>
-        </div>
-      </div>
-    );
-  }
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
-  const acceptedPercentage = Math.round((stats.accepted / stats.total) * 100);
+  const acceptedPercentage = stats.total > 0 ? Math.round((stats.accepted / stats.total) * 100) : 0;
   const strokeDasharray = `${acceptedPercentage} ${100 - acceptedPercentage}`;
 
   return (
     <div className="admin-card w-full h-full flex flex-col shadow-sm border border-gray-100 overflow-hidden">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6">
         <h3 className="text-lg font-bold text-gray-800 !mb-0">Outcome Rate</h3>
-      </div>
-
-      <div className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 lg:gap-12 px-2 py-4">
-        {/* Pie Chart SVG */}
-        <div className="relative w-32 h-32 flex-shrink-0 drop-shadow-md">
-          <svg viewBox="0 0 42 42" className="w-full h-full transform -rotate-90">
-            {/* Background Circle (Rejected) */}
-            <circle
-              cx="21"
-              cy="21"
-              r="15.91549430918954"
-              fill="transparent"
-              stroke="#133020"
-              strokeWidth="6"
-            />
-            {/* Foreground Circle (Accepted) */}
-            <circle
-              cx="21"
-              cy="21"
-              r="15.91549430918954"
-              fill="transparent"
-              stroke="#ffb347"
-              strokeWidth="6"
-              strokeDasharray={strokeDasharray}
-              strokeDashoffset="0"
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-2xl font-bold text-gray-900 leading-none">{acceptedPercentage}%</span>
-            <span className="text-[9px] font-bold text-gray-400 tracking-widest mt-1">Hired</span>
-          </div>
-        </div>
-
-        {/* Legend */}
-        <div className="flex flex-col gap-5 min-w-[100px]">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-[#ffb347]"></span>
-              <span className="text-xs font-bold text-gray-900">Accepted</span>
-            </div>
-            <span className="text-[10px] font-semibold text-gray-500 ml-5">{stats.accepted} applicant{stats.accepted !== 1 ? 's' : ''}</span>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-[#133020]"></span>
-              <span className="text-xs font-bold text-gray-900">Rejected</span>
-            </div>
-            <span className="text-[10px] font-semibold text-gray-500 ml-5">{stats.rejected} applicant{stats.rejected !== 1 ? 's' : ''}</span>
-          </div>
+        <div className="flex items-center gap-1.5">
+          <select 
+            value={selectedMonth} 
+            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+            className="text-[11px] font-bold bg-gray-50 border border-gray-100 rounded-xl px-3 py-1.5 outline-none text-gray-700 focus:border-black focus:bg-white transition-all cursor-pointer hover:shadow-sm"
+          >
+            {monthNames.map((name, i) => <option key={name} value={i}>{name.slice(0, 3)}</option>)}
+          </select>
+          <select 
+            value={selectedYear} 
+            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+            className="text-[11px] font-bold bg-gray-50 border border-gray-100 rounded-xl px-3 py-1.5 outline-none text-gray-700 focus:border-black focus:bg-white transition-all cursor-pointer hover:shadow-sm"
+          >
+            {years.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
         </div>
       </div>
+
+      {stats.total === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center opacity-40 py-12">
+          <IoCheckmarkCircleOutline size={32} className="mb-2" />
+          <span className="text-xs font-bold tracking-widest text-center mt-2">No Outcome Data Yet</span>
+        </div>
+      ) : (
+        <div className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 lg:gap-12 px-2 py-4">
+          {/* Pie Chart SVG */}
+          <div className="relative w-32 h-32 flex-shrink-0 drop-shadow-md">
+            <svg viewBox="0 0 42 42" className="w-full h-full transform -rotate-90">
+              {/* Background Circle (Rejected) */}
+              <circle
+                cx="21"
+                cy="21"
+                r="15.91549430918954"
+                fill="transparent"
+                stroke="#133020"
+                strokeWidth="6"
+              />
+              {/* Foreground Circle (Accepted) */}
+              <circle
+                cx="21"
+                cy="21"
+                r="15.91549430918954"
+                fill="transparent"
+                stroke="#ffb347"
+                strokeWidth="6"
+                strokeDasharray={strokeDasharray}
+                strokeDashoffset="0"
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-2xl font-bold text-gray-900 leading-none">{acceptedPercentage}%</span>
+              <span className="text-[9px] font-bold text-gray-400 tracking-widest mt-1">Hired</span>
+            </div>
+          </div>
+
+          {/* Legend */}
+          <div className="flex flex-col gap-5 min-w-[100px]">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-[#ffb347]"></span>
+                <span className="text-xs font-bold text-gray-900">Accepted</span>
+              </div>
+              <span className="text-[10px] font-semibold text-gray-500 ml-5">{stats.accepted} applicant{stats.accepted !== 1 ? 's' : ''}</span>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-[#133020]"></span>
+                <span className="text-xs font-bold text-gray-900">Rejected</span>
+              </div>
+              <span className="text-[10px] font-semibold text-gray-500 ml-5">{stats.rejected} applicant{stats.rejected !== 1 ? 's' : ''}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
