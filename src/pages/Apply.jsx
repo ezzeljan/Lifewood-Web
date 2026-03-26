@@ -106,7 +106,7 @@ export default function Apply() {
     if (!formData.phoneNumber || !phoneRegex.test(formData.phoneNumber)) return "Please enter a valid phone number.";
 
     const ageValue = Number(formData.age);
-    if (!formData.age || isNaN(ageValue) || ageValue < 16 || ageValue > 80) return "Age must be a valid number.";
+    if (!formData.age || isNaN(ageValue) || ageValue < 16 || ageValue > 60) return "Age must be a valid number.";
 
     if (!formData.currentAddress.trim() || formData.currentAddress.trim().length < 5) return "Please enter a more detailed current address.";
 
@@ -180,7 +180,7 @@ export default function Apply() {
       }
       case 'age': {
         const ageValue = Number(value);
-        return value && (isNaN(ageValue) || ageValue < 16 || ageValue > 80) ? "Age must be a valid number between 16 and 80." : "";
+        return value && (isNaN(ageValue) || ageValue < 16 || ageValue > 60) ? "Age must be a valid number between 16 and 60." : "";
       }
       case 'currentAddress':
         return value.trim().length > 0 && value.trim().length < 5 ? "Please enter a more detailed current address." : "";
@@ -224,7 +224,7 @@ export default function Apply() {
 
               <div className="form-group">
                 <label htmlFor="age">Age</label>
-                <input id="age" name="age" type="number" min="16" max="80" value={formData.age} onChange={handleInputChange} placeholder="e.g. 25" required />
+                <input id="age" name="age" type="number" min="16" max="60" value={formData.age} onChange={handleInputChange} placeholder="e.g. 25" required />
                 {getFieldError('age', formData.age) && <span className="text-red-500 text-xs -mt-1 font-medium">{getFieldError('age', formData.age)}</span>}
               </div>
 

@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import Navigation from './components/Navigation';
 import Footer from './components/Footer';
@@ -30,6 +30,16 @@ function PageTransition({ children }) {
   return <>{children}</>;
 }
 
+function AdminGatekeeper({ children }) {
+  const hasAccess = sessionStorage.getItem('admin_access_granted') === 'true';
+
+  if (!hasAccess) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -44,7 +54,11 @@ function AppRoutes() {
       <Route path="/careers" element={<PageTransition><Careers /></PageTransition>} />
       <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
       <Route path="/apply" element={<PageTransition><Apply /></PageTransition>} />
-      <Route path="/admin" element={<PageTransition><Admin /></PageTransition>} />
+      <Route path="/admin" element={
+        <AdminGatekeeper>
+          <PageTransition><Admin /></PageTransition>
+        </AdminGatekeeper>
+      } />
     </Routes>
   );
 }
@@ -62,12 +76,33 @@ function Layout({ children }) {
   );
 }
 
+function AppContent() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Secret combo: Ctrl + Shift + Alt + A
+      if (e.ctrlKey && e.shiftKey && e.altKey && e.key.toLowerCase() === 'a') {
+        sessionStorage.setItem('admin_access_granted', 'true');
+        navigate('/admin');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
+
+  return (
+    <Layout>
+      <AppRoutes />
+    </Layout>
+  );
+}
+
 export default function App() {
   return (
     <Router>
-      <Layout>
-        <AppRoutes />
-      </Layout>
+      <AppContent />
     </Router>
   );
 }

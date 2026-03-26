@@ -122,8 +122,8 @@ export const submitApplication = onCall({ region: 'us-central1' }, async (reques
   const cvFileName = requireString(data.cvFileName, 'cvFileName', 300);
 
   const ageValue = Number(data.age);
-  if (!Number.isInteger(ageValue) || ageValue < 16 || ageValue > 80) {
-    throw new HttpsError('invalid-argument', 'age must be a number between 16 and 80.');
+  if (!Number.isInteger(ageValue) || ageValue < 16 || ageValue > 60) {
+    throw new HttpsError('invalid-argument', 'age must be a number between 16 and 60.');
   }
   if (!GENDER_OPTIONS.has(gender)) {
     throw new HttpsError('invalid-argument', 'gender is invalid.');

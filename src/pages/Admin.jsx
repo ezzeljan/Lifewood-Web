@@ -9,6 +9,7 @@ import logo from '../assets/logo.png';
 import icon from '../assets/icon.png';
 import Grainient from '../components/Grainient';
 import { uploadProfileImage } from '../lib/api';
+import { POSITION_OPTIONS } from '../lib/applicationOptions';
 import './Admin.css';
 
 function StatusBadge({ status }) {
@@ -1423,7 +1424,7 @@ function CustomMessageStatusSelect({ value, onChange }) {
   );
 }
 
-function CustomMessageFilterSelect({ value, onChange, options, prefix }) {
+function CustomMessageFilterSelect({ value, onChange, options, prefix, dropdownClassName }) {
   const [isOpen, setIsOpen] = useState(false);
   const selectedLabel = options.find(opt => opt.value === value)?.label || options[0].label;
 
@@ -1437,7 +1438,7 @@ function CustomMessageFilterSelect({ value, onChange, options, prefix }) {
       >
         <div className="flex items-center gap-2">
           {prefix && <span className="text-gray-400 font-medium">{prefix}</span>}
-          <span>{selectedLabel}</span>
+          <span className="truncate max-w-[150px]">{selectedLabel}</span>
         </div>
         <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
           <IoChevronDownOutline size={16} className="text-gray-400" />
@@ -1451,7 +1452,7 @@ function CustomMessageFilterSelect({ value, onChange, options, prefix }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-full mt-2 left-0 w-full sm:w-48 bg-white border border-gray-100 rounded-3xl shadow-xl overflow-hidden z-[100] flex flex-col py-2"
+            className={`absolute top-full mt-2 left-0 bg-white border border-gray-100 rounded-3xl shadow-xl overflow-hidden z-[100] flex flex-col py-2 ${dropdownClassName || 'w-full sm:w-48'}`}
           >
             {options.map((opt) => (
               <button
@@ -1630,11 +1631,38 @@ export default function Admin() {
   const [actionMessage, setActionMessage] = useState(null);
   const [isDataLoading, setIsDataLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [lastActivity, setLastActivity] = useState(Date.now());
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Idle Logout: 20 minutes (20 * 60 * 1000 ms)
+  useEffect(() => {
+    if (!isAdmin || !currentUser) return undefined;
+
+    const IDLE_TIMEOUT = 20 * 60 * 1000;
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    
+    const updateActivity = () => setLastActivity(Date.now());
+
+    events.forEach(event => window.addEventListener(event, updateActivity));
+
+    const checkIdle = setInterval(() => {
+      const now = Date.now();
+      if (now - lastActivity > IDLE_TIMEOUT) {
+        signOut(auth);
+        sessionStorage.removeItem('admin_access_granted');
+        setActionMessage({ text: 'Session expired due to inactivity.', type: 'error' });
+      }
+    }, 60000); // Check every minute
+
+    return () => {
+      events.forEach(event => window.removeEventListener(event, updateActivity));
+      clearInterval(checkIdle);
+    };
+  }, [isAdmin, currentUser, lastActivity]);
 
   // Sidebar & Navigation state
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -1653,6 +1681,7 @@ export default function Admin() {
   // Filters
   const [appSearch, setAppSearch] = useState('');
   const [appStatusFilter, setAppStatusFilter] = useState('all');
+  const [appPositionFilter, setAppPositionFilter] = useState('all');
   const [msgSearch, setMsgSearch] = useState('');
   const [msgStatusFilter, setMsgStatusFilter] = useState('all');
   const [msgSortOrder, setMsgSortOrder] = useState('date_desc');
@@ -1671,6 +1700,25 @@ export default function Admin() {
     resolved: 'date_asc'
   });
   const [expandedColumn, setExpandedColumn] = useState(null);
+  const [columnPages, setColumnPages] = useState({
+    pending: 1,
+    interview: 1,
+    accepted: 1,
+    rejected: 1,
+    withdrew: 1,
+    trash: 1,
+  });
+
+  useEffect(() => {
+    setColumnPages({
+      pending: 1,
+      interview: 1,
+      accepted: 1,
+      rejected: 1,
+      withdrew: 1,
+      trash: 1,
+    });
+  }, [appSearch, appStatusFilter, appPositionFilter]);
 
 
 
@@ -2205,6 +2253,11 @@ export default function Admin() {
       });
   }, [nonDeletedApps]);
 
+  const POSITION_FILTER_OPTIONS = useMemo(() => [
+    { value: 'all', label: 'All Positions' },
+    ...POSITION_OPTIONS.map(pos => ({ value: pos, label: pos }))
+  ], []);
+
   const filteredApps = useMemo(() => {
     return applications.filter((app) => {
       const term = appSearch.toLowerCase();
@@ -2221,9 +2274,10 @@ export default function Admin() {
       }
 
       const sMatch = appStatusFilter === 'all' || appStatusFilter === 'trash' || app.status === appStatusFilter;
-      return (nMatch || eMatch || pMatch) && sMatch;
+      const posMatch = appPositionFilter === 'all' || app.positionApplied === appPositionFilter;
+      return (nMatch || eMatch || pMatch) && sMatch && posMatch;
     });
-  }, [applications, appSearch, appStatusFilter]);
+  }, [applications, appSearch, appStatusFilter, appPositionFilter]);
 
   const filteredMsgs = useMemo(() => {
     const now = new Date();
@@ -2904,6 +2958,13 @@ export default function Admin() {
                     value={appStatusFilter}
                     onChange={(val) => setAppStatusFilter(val)}
                   />
+                  <CustomMessageFilterSelect
+                    value={appPositionFilter}
+                    onChange={(val) => setAppPositionFilter(val)}
+                    options={POSITION_FILTER_OPTIONS}
+                    prefix="Position"
+                    dropdownClassName="w-full sm:min-w-[320px] sm:w-auto"
+                  />
                 </div>
               </div>
 
@@ -2935,6 +2996,12 @@ export default function Admin() {
                   });
 
                   const isExpanded = expandedColumn === col.status;
+                  const totalItemsCount = items.length;
+                  const pageSize = isExpanded ? 10 : 5;
+                  const maxPages = Math.ceil(totalItemsCount / pageSize);
+                  const currentPage = columnPages[col.status] || 1;
+                  const pagedItems = items.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
                   const isHidden = expandedColumn !== null && !isExpanded;
 
                   return (
@@ -2945,7 +3012,7 @@ export default function Admin() {
                       <div className="flex items-center justify-between px-3">
                         <div className="flex items-center gap-2">
                           <h3 className="text-[11px] font-bold text-gray-400 tracking-widest">{col.title}</h3>
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#FFB347] text-white`}>{items.length}</span>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#FFB347] text-white`}>{totalItemsCount}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <ColumnSortSelect
@@ -2962,7 +3029,7 @@ export default function Admin() {
                         </div>
                       </div>
 
-                      <div className={`bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden bg-white/50 backdrop-blur-sm ${isExpanded ? '' : 'flex flex-col h-[600px]'}`}>
+                      <div className={`bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden bg-white/50 backdrop-blur-sm ${isExpanded ? '' : 'flex flex-col h-[650px]'}`}>
                         {/* Expanded column headers */}
                         {isExpanded && (
                           <div
@@ -2977,15 +3044,16 @@ export default function Admin() {
                             <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</div>
                           </div>
                         )}
-                        <div className={`pr-1 custom-scrollbar ${isExpanded ? 'overflow-y-auto max-h-[600px]' : 'flex-1 overflow-y-auto'}`}>
-                          {items.length > 0 ? (
-                            items.map((item, idx) => (
+                        <div className={`pr-1 custom-scrollbar ${isExpanded ? 'overflow-y-auto max-h-[800px]' : 'flex-1 overflow-y-auto'}`}>
+                          {pagedItems.length > 0 ? (
+                            pagedItems.map((item, idx) => (
                               <div
                                 key={item.id}
                                 onClick={() => setSelectedAppDetails(item)}
                                 style={isExpanded ? { gridTemplateColumns: '200px 200px 220px 140px 110px 120px' } : {}}
-                                className={`hover:bg-black/5 transition-colors cursor-pointer group ${idx !== items.length - 1 ? 'border-b border-gray-100' : ''} ${isExpanded ? 'grid items-center gap-4 px-5 py-3' : 'p-5 flex flex-col gap-3'}`}
+                                className={`hover:bg-black/5 transition-colors cursor-pointer group ${idx !== pagedItems.length - 1 ? 'border-b border-gray-100' : ''} ${isExpanded ? 'grid items-center gap-4 px-5 py-3' : 'p-5 flex flex-col gap-3'}`}
                               >
+                                {/* ... (rest of applicant item remains the same) */}
                                 {/* Avatar + Name */}
                                 <div className="flex items-center gap-3 overflow-hidden">
                                   <div className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center text-[10px] font-bold shrink-0 border border-black group-hover:scale-105 transition-transform">
@@ -3081,17 +3149,17 @@ export default function Admin() {
                                     {item.deleted ? (
                                       <button
                                         type="button"
-                                        className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-black hover:text-white rounded-full transition-all active:scale-95"
+                                        className="w-8 h-8 flex items-center justify-center text-gray-400 hover:bg-black hover:text-white rounded-full transition-all active:scale-95"
                                         title="Restore Applicant"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           handleRestoreApplication(item.id);
                                         }}
                                       >
-                                        <IoChevronForwardOutline size={18} className="rotate-180" />
+                                        <IoChevronForwardOutline size={16} className="rotate-180" />
                                       </button>
                                     ) : (
-                                      <>
+                                      <div className="flex gap-1">
                                         {(() => {
                                           const scheduledDate = item.interviewScheduledAt?.toDate ? item.interviewScheduledAt.toDate() : (item.interviewScheduledAt ? new Date(item.interviewScheduledAt) : null);
                                           const isUpcoming = scheduledDate && scheduledDate > new Date();
@@ -3101,33 +3169,33 @@ export default function Admin() {
                                               {isUpcoming && (
                                                 <button
                                                   type="button"
-                                                  className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-orange-500 hover:text-white rounded-full transition-all active:scale-95"
+                                                  className="w-8 h-8 flex items-center justify-center text-gray-400 hover:bg-orange-500 hover:text-white rounded-full transition-all active:scale-95"
                                                   title="Reschedule Interview"
                                                   onClick={(e) => {
                                                     e.stopPropagation();
                                                     setSchedulingApp(item);
                                                   }}
                                                 >
-                                                  <IoCalendarOutline size={18} />
+                                                  <IoCalendarOutline size={16} />
                                                 </button>
                                               )}
 
                                               {(item.status === 'pending' || (item.status === 'interview' && !isUpcoming && item.interviewType === 'pre-screening')) && (
                                                 <button
                                                   type="button"
-                                                  className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white rounded-full transition-all active:scale-95"
+                                                  className="w-8 h-8 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white rounded-full transition-all active:scale-95"
                                                   title={item.status === 'interview' ? 'Schedule Final Interview' : 'Schedule Pre-screening'}
                                                   onClick={(e) => {
                                                     e.stopPropagation();
                                                     setSchedulingApp(item);
                                                   }}
                                                 >
-                                                  <IoCalendarOutline size={18} />
+                                                  <IoCalendarOutline size={16} />
                                                 </button>
                                               )}
                                               <button
                                                 type="button"
-                                                className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-green-600 hover:text-white rounded-full transition-all active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed"
+                                                className="w-8 h-8 flex items-center justify-center text-gray-400 hover:bg-green-600 hover:text-white rounded-full transition-all active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed"
                                                 title={item.status === 'pending' ? 'Pre-screening required' : item.status === 'rejected' ? 'Cannot accept rejected applicant' : item.interviewType === 'pre-screening' ? 'Final Interview required' : 'Accept Applicant'}
                                                 onClick={(e) => {
                                                   e.stopPropagation();
@@ -3135,11 +3203,11 @@ export default function Admin() {
                                                 }}
                                                 disabled={item.status === 'pending' || (item.status === 'interview' && item.interviewType === 'pre-screening') || item.status === 'accepted' || item.status === 'rejected' || item.status === 'withdrew'}
                                               >
-                                                <IoCheckmarkCircleOutline size={18} />
+                                                <IoCheckmarkCircleOutline size={16} />
                                               </button>
                                               <button
                                                 type="button"
-                                                className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white rounded-full transition-all active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed"
+                                                className="w-8 h-8 flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white rounded-full transition-all active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed"
                                                 title="Reject Applicant"
                                                 onClick={(e) => {
                                                   e.stopPropagation();
@@ -3147,11 +3215,11 @@ export default function Admin() {
                                                 }}
                                                 disabled={item.status === 'rejected' || item.status === 'withdrew'}
                                               >
-                                                <IoCloseOutline size={20} />
+                                                <IoCloseOutline size={18} />
                                               </button>
                                               <button
                                                 type="button"
-                                                className="w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-purple-600 hover:text-white rounded-full transition-all active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed"
+                                                className="w-8 h-8 flex items-center justify-center text-gray-400 hover:bg-purple-600 hover:text-white rounded-full transition-all active:scale-95 disabled:opacity-20 disabled:cursor-not-allowed"
                                                 title="Mark as Withdrew / Dropped Out"
                                                 onClick={(e) => {
                                                   e.stopPropagation();
@@ -3159,12 +3227,12 @@ export default function Admin() {
                                                 }}
                                                 disabled={item.status === 'withdrew' || item.status === 'accepted'}
                                               >
-                                                <IoArrowBackOutline size={18} />
+                                                <IoArrowBackOutline size={16} />
                                               </button>
                                             </div>
                                           );
                                         })()}
-                                      </>
+                                      </div>
                                     )}
                                   </div>
                                 </div>
@@ -3177,9 +3245,33 @@ export default function Admin() {
                             </div>
                           )}
                         </div>
+
+                        {/* Pagination Bar */}
+                        {maxPages > 1 && (
+                          <div className="px-5 py-4 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Page {currentPage}/{maxPages}</span>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setColumnPages(prev => ({ ...prev, [col.status]: Math.max(1, currentPage - 1) }))}
+                                disabled={currentPage === 1}
+                                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-gray-100 text-gray-400 hover:bg-black hover:text-white hover:border-black transition-all disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-gray-400 disabled:hover:border-gray-100 active:scale-95 shadow-sm"
+                              >
+                                <IoChevronBackOutline size={14} />
+                              </button>
+                              <button
+                                onClick={() => setColumnPages(prev => ({ ...prev, [col.status]: Math.min(maxPages, currentPage + 1) }))}
+                                disabled={currentPage === maxPages}
+                                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white border border-gray-100 text-gray-400 hover:bg-black hover:text-white hover:border-black transition-all disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-gray-400 disabled:hover:border-gray-100 active:scale-95 shadow-sm"
+                              >
+                                <IoChevronForwardOutline size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
+
                 })}
               </div>
             </div>
