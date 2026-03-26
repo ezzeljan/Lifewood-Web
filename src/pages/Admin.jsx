@@ -1677,6 +1677,8 @@ export default function Admin() {
   const [deleteConfirmApp, setDeleteConfirmApp] = useState(null);
   const [pendingDecision, setPendingDecision] = useState(null); // { application, status }
   const [selectedLog, setSelectedLog] = useState(null);
+  const [adminProfiles, setAdminProfiles] = useState([]);
+  const [editingAdmin, setEditingAdmin] = useState(null); // The profile document we are currently editing
 
   // Filters
   const [appSearch, setAppSearch] = useState('');
@@ -1687,6 +1689,7 @@ export default function Admin() {
   const [msgSortOrder, setMsgSortOrder] = useState('date_desc');
   const [msgDateFilter, setMsgDateFilter] = useState('all');
   const [msgPage, setMsgPage] = useState(1);
+  const [logPage, setLogPage] = useState(1);
   const [columnSorts, setColumnSorts] = useState({
     pending: 'date_asc',
     interview: 'date_asc',
@@ -1773,6 +1776,45 @@ export default function Admin() {
     return () => unsubscribe();
   }, [allowedAdminEmails]);
 
+  // Fetch admin profiles
+  useEffect(() => {
+    if (!isAdmin) return undefined;
+
+    const unsub = onSnapshot(collection(db, 'admin_profiles'), (snapshot) => {
+      const profiles = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setAdminProfiles(profiles);
+      
+      // Initialize editingAdmin with current user's profile if not already set
+      if (!editingAdmin && currentUser) {
+        const myProfile = profiles.find(p => p.id === currentUser.email);
+        if (myProfile) {
+          setEditingAdmin(myProfile);
+          setNewName(myProfile.displayName || '');
+          setNewPhotoURL(myProfile.photoURL || '');
+        } else {
+          // If no profile in Firestore yet, use Auth session data
+          const fallbackProfile = { 
+            id: currentUser.email, 
+            displayName: currentUser.displayName || '', 
+            photoURL: currentUser.photoURL || '',
+            role: adminRole
+          };
+          setEditingAdmin(fallbackProfile);
+          setNewName(fallbackProfile.displayName);
+          setNewPhotoURL(fallbackProfile.photoURL);
+        }
+      } else if (editingAdmin) {
+        // Keep editingAdmin in sync if it's updated in Firestore
+        const updated = profiles.find(p => p.id === editingAdmin.id);
+        if (updated) {
+          setEditingAdmin(updated);
+        }
+      }
+    });
+
+    return () => unsub();
+  }, [isAdmin, currentUser, adminRole]);
+
 
 
   useEffect(() => {
@@ -1851,19 +1893,39 @@ export default function Admin() {
   }, [currentUser]);
 
   const handleUpdateProfile = async () => {
-    if (!currentUser) return;
+    if (!currentUser || !editingAdmin || adminRole !== 'super_admin') return;
     setIsUpdatingProfile(true);
     setActionMessage(null);
 
     try {
-      await updateProfile(currentUser, {
-        displayName: newName,
-        photoURL: newPhotoURL || currentUser.photoURL
+      // Always save to Firestore admin_profiles
+      await updateDoc(doc(db, 'admin_profiles', editingAdmin.id), {
+        displayName: newName || editingAdmin.displayName || '',
+        photoURL: newPhotoURL || editingAdmin.photoURL || null,
+        updatedAt: serverTimestamp()
+      }).catch(async (err) => {
+        // If doc doesn't exist, create it (fallback for first time)
+        if (err.code === 'not-found') {
+          const { setDoc } = await import('firebase/firestore');
+          await setDoc(doc(db, 'admin_profiles', editingAdmin.id), {
+            displayName: newName || editingAdmin.displayName || '',
+            photoURL: newPhotoURL || editingAdmin.photoURL || null,
+            email: editingAdmin.id,
+            role: editingAdmin.role || 'admin',
+            updatedAt: serverTimestamp()
+          });
+        } else throw err;
       });
       
-      // Force reload of user data to trigger UI updates
-      await auth.currentUser.reload();
-      setCurrentUser({...auth.currentUser});
+      // If editing current user, also update Auth profile as a mirror
+      if (editingAdmin.id === currentUser.email) {
+        await updateProfile(currentUser, {
+          displayName: newName,
+          photoURL: newPhotoURL || currentUser.photoURL
+        });
+        await auth.currentUser.reload();
+        setCurrentUser({...auth.currentUser});
+      }
       
       setActionMessage({ text: 'Profile updated successfully!', type: 'success' });
     } catch (error) {
@@ -1875,7 +1937,7 @@ export default function Admin() {
 
   const handleProfileImageUpload = async (e) => {
     const file = e.target.files[0];
-    if (!file) return;
+    if (!file || !editingAdmin || adminRole !== 'super_admin') return;
 
     setIsUpdatingProfile(true);
     setActionMessage(null);
@@ -1884,15 +1946,30 @@ export default function Admin() {
       const url = await uploadProfileImage(file);
       setNewPhotoURL(url);
       
-      // Auto-save the new photo URL to profile
-      if (currentUser) {
+      // Save to Firestore
+      await updateDoc(doc(db, 'admin_profiles', editingAdmin.id), {
+        photoURL: url,
+        updatedAt: serverTimestamp()
+      }).catch(async (err) => {
+        if (err.code === 'not-found') {
+          const { setDoc } = await import('firebase/firestore');
+          await setDoc(doc(db, 'admin_profiles', editingAdmin.id), {
+            photoURL: url,
+            email: editingAdmin.id,
+            updatedAt: serverTimestamp()
+          });
+        }
+      });
+
+      // If editing self, mirror to Auth
+      if (editingAdmin.id === currentUser.email) {
         await updateProfile(auth.currentUser, {
           photoURL: url
         });
         await auth.currentUser.reload();
         setCurrentUser({...auth.currentUser});
-        setActionMessage({ text: 'Profile image updated successfully!', type: 'success' });
       }
+      setActionMessage({ text: 'Profile image updated successfully!', type: 'success' });
     } catch (error) {
       setActionMessage({ text: error?.message || 'Failed to upload image.', type: 'error' });
     } finally {
@@ -2340,6 +2417,15 @@ export default function Admin() {
     };
   }, [filteredMsgs, msgPage]);
 
+  const { pagedLogs, maxLogPages } = useMemo(() => {
+    const start = (logPage - 1) * 10;
+    const end = start + 10;
+    return {
+      pagedLogs: activityLogs.slice(start, end),
+      maxLogPages: Math.max(1, Math.ceil(activityLogs.length / 10))
+    };
+  }, [activityLogs, logPage]);
+
   // Reset page when filters change
   useEffect(() => {
     setMsgPage(1);
@@ -2354,6 +2440,7 @@ export default function Admin() {
       acceptedApps: nonDeletedApps.filter(app => app.status === 'accepted').length,
       pendingApps: nonDeletedApps.filter((a) => a.status === 'pending').length,
       resolvedInquiries: nonDeletedMsgs.filter(m => m.status === 'resolved').length,
+      pendingInquiries: nonDeletedMsgs.filter(m => m.status === 'new' || !m.status).length,
       todayMsgs: nonDeletedMsgs.filter((m) => {
         if (!m.createdAt || m.status === 'spam') return false;
         const d = m.createdAt.toDate ? m.createdAt.toDate() : new Date(m.createdAt);
@@ -2861,7 +2948,7 @@ export default function Admin() {
                       <p className="mt-4 text-sm font-medium text-gray-500 tracking-widest">Admin Dashboard</p>
                     </div>
 
-                    <div className={`relative z-10 grid grid-cols-2 ${adminRole === 'super_admin' ? 'lg:grid-cols-4' : 'lg:grid-cols-2'} gap-10 w-full pt-8 border-t border-black/5`}>
+                    <div className={`relative z-10 grid grid-cols-2 ${adminRole === 'super_admin' ? 'lg:grid-cols-5' : 'lg:grid-cols-3'} gap-10 w-full pt-8 border-t border-black/5`}>
                       {(adminRole === 'super_admin' || adminRole === 'app_admin') && (
                         <>
                           <div className="transition-all">
@@ -2881,10 +2968,16 @@ export default function Admin() {
                         </div>
                       )}
                       {(adminRole === 'super_admin' || adminRole === 'inquiry_admin') && (
-                        <div className="transition-all">
-                          <h3 className="text-[10px] font-bold text-black tracking-widest mb-2">Resolved Inquiries</h3>
-                          <div className="text-4xl font-bold text-gray-900 leading-none">{stats.resolvedInquiries}</div>
-                        </div>
+                        <>
+                          <div className="transition-all">
+                            <h3 className="text-[10px] font-bold text-black tracking-widest mb-2">Resolved Inquiries</h3>
+                            <div className="text-4xl font-bold text-gray-900 leading-none">{stats.resolvedInquiries}</div>
+                          </div>
+                          <div className="transition-all">
+                            <h3 className="text-[10px] font-bold text-black tracking-widest mb-2">Pending Review</h3>
+                            <div className="text-4xl font-bold text-gray-900 leading-none">{stats.pendingInquiries}</div>
+                          </div>
+                        </>
                       )}
                     </div>
                   </div>
@@ -3496,8 +3589,8 @@ export default function Admin() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {activityLogs.length > 0 ? (
-                        activityLogs.map((log) => (
+                      {pagedLogs.length > 0 ? (
+                        pagedLogs.map((log) => (
                           <tr key={log.id} onClick={() => setSelectedLog(log)} className="hover:bg-gray-50/30 transition-colors group cursor-pointer">
                             <td className="px-8 py-6">
                               <div className="flex items-center gap-3">
@@ -3559,6 +3652,38 @@ export default function Admin() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Pagination Controls for Logs */}
+                {maxLogPages > 1 && (
+                  <div className="bg-gray-50/50 px-8 py-4 flex items-center justify-between border-t border-gray-100/50">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Showing</span>
+                      <div className="text-sm font-bold text-gray-900">
+                        {Math.min(activityLogs.length, (logPage - 1) * 10 + 1)} - {Math.min(activityLogs.length, logPage * 10)} 
+                        <span className="text-gray-400 font-medium ml-1">of {activityLogs.length} logs</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setLogPage(prev => Math.max(1, prev - 1))}
+                        disabled={logPage === 1}
+                        className="w-10 h-10 flex items-center justify-center bg-white border border-gray-100 rounded-2xl text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
+                      >
+                        <IoChevronBackOutline size={18} />
+                      </button>
+                      <div className="px-4 py-2 bg-white border border-gray-100 rounded-2xl text-[11px] font-black text-gray-900 shadow-sm">
+                        PAGE {logPage} OF {maxLogPages}
+                      </div>
+                      <button
+                        onClick={() => setLogPage(prev => Math.min(maxLogPages, prev + 1))}
+                        disabled={logPage === maxLogPages}
+                        className="w-10 h-10 flex items-center justify-center bg-white border border-gray-100 rounded-2xl text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
+                      >
+                        <IoChevronForwardOutline size={18} />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -3578,28 +3703,32 @@ export default function Admin() {
                   <div className="p-8 sm:p-10 flex flex-col sm:flex-row items-center sm:items-start gap-10">
                     <div className="relative group shrink-0">
                       <div className="w-40 h-40 rounded-full bg-gray-100 overflow-hidden border-[6px] border-white shadow-xl flex items-center justify-center relative">
-                        {currentUser?.photoURL || newPhotoURL ? (
-                          <img src={newPhotoURL || currentUser.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                        {(newPhotoURL || editingAdmin?.photoURL) ? (
+                          <img src={newPhotoURL || editingAdmin?.photoURL} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full bg-[#133020] text-white flex items-center justify-center text-5xl font-bold">
-                            {currentUser?.displayName?.[0] || currentUser?.email?.[0]?.toUpperCase() || 'A'}
+                            {editingAdmin?.displayName?.[0] || editingAdmin?.id?.[0]?.toUpperCase() || 'A'}
                           </div>
                         )}
-                        {/* Shimmer/Overlay on hover */}
+                      {/* Shimmer/Overlay on hover - Super Admin Only */}
+                      {adminRole === 'super_admin' && (
                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
                           <IoCameraOutline size={32} className="text-white transform scale-90 group-hover:scale-100 transition-transform" />
                         </div>
+                      )}
                         {isUpdatingProfile && (
                           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center">
                             <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
                           </div>
                         )}
                       </div>
-                      <label className="absolute bottom-1 right-1 w-12 h-12 bg-[#FFB347] text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:bg-[#ffb347]/90 transition-all group-hover:scale-110 border-4 border-white active:scale-95">
-                        <input type="file" className="hidden" accept="image/*" onChange={handleProfileImageUpload} disabled={isUpdatingProfile} />
-                        <IoCameraOutline size={22} />
-                      </label>
-                    </div>
+                        {adminRole === 'super_admin' && (
+                          <label className="absolute bottom-1 right-1 w-12 h-12 bg-[#FFB347] text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:bg-[#ffb347]/90 transition-all group-hover:scale-110 border-4 border-white active:scale-95">
+                            <input type="file" className="hidden" accept="image/*" onChange={handleProfileImageUpload} disabled={isUpdatingProfile} />
+                            <IoCameraOutline size={22} />
+                          </label>
+                        )}
+                      </div>
 
                     <div className="flex-1 flex flex-col gap-6 w-full pt-2">
                       <div className="flex flex-col gap-2 w-full">
@@ -3609,37 +3738,85 @@ export default function Admin() {
                           value={newName} 
                           onChange={(e) => setNewName(e.target.value)}
                           placeholder="Your Display Name"
-                          className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-[24px] text-base font-bold text-gray-900 focus:bg-white focus:ring-4 focus:ring-black/5 focus:border-black transition-all outline-none"
+                          disabled={adminRole !== 'super_admin'}
+                          className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-[24px] text-base font-bold text-gray-900 focus:bg-white focus:ring-4 focus:ring-black/5 focus:border-black transition-all outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                       </div>
                       <div className="flex flex-col gap-2 w-full">
                         <label className="text-[10px] font-black text-gray-400 tracking-[0.2em] uppercase ml-1">Connected Email</label>
                         <div className="w-full px-6 py-4 bg-gray-50/50 border border-gray-100 rounded-[24px] text-base font-bold text-gray-400 flex items-center gap-3">
                            <IoMailOutline size={18} />
-                           {currentUser?.email || ''}
+                           {editingAdmin?.id || currentUser?.email || ''}
                         </div>
                         <p className="text-[10px] text-gray-400 ml-1 font-bold italic tracking-wide uppercase">System Locked Address</p>
                       </div>
                       
-                      <div className="pt-4">
-                        <button 
-                          onClick={handleUpdateProfile}
-                          disabled={isUpdatingProfile || (newName === currentUser?.displayName)}
-                          className={`min-w-[180px] py-4 rounded-[20px] text-sm font-black uppercase tracking-[0.15em] transition-all shadow-lg active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-3 ${
-                            (newName !== currentUser?.displayName) ? 'bg-black text-white hover:bg-gray-800' : 'bg-gray-100 text-gray-400'
-                          }`}
-                        >
-                          {isUpdatingProfile ? (
-                            <>
-                              <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                              Processing...
-                            </>
-                          ) : 'Apply Changes'}
-                        </button>
-                      </div>
+                      {adminRole === 'super_admin' && (
+                        <div className="pt-4 flex flex-col gap-2">
+                          <button 
+                            onClick={handleUpdateProfile}
+                            disabled={isUpdatingProfile || (newName === (editingAdmin?.displayName || currentUser?.displayName))}
+                            className={`min-w-[180px] py-4 rounded-[20px] text-sm font-black uppercase tracking-[0.15em] transition-all shadow-lg active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-3 ${
+                              (newName !== (editingAdmin?.displayName || currentUser?.displayName)) ? 'bg-black text-white hover:bg-gray-800' : 'bg-gray-100 text-gray-400'
+                            }`}
+                          >
+                            {isUpdatingProfile ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                                Processing...
+                              </>
+                            ) : 'Apply Changes'}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
+
+                {/* Account Selector for Super Admin */}
+                {adminRole === 'super_admin' && (
+                  <div className="lg:col-span-12 mt-4 px-4 sm:px-0">
+                    <h3 className="text-[10px] font-black text-gray-400 tracking-[0.2em] uppercase ml-1 mb-6">Select Admin Profile to Manage</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {[
+                        { id: 'admin@lifewood.com', role: 'super_admin', label: 'Super Admin' },
+                        { id: 'applicants@lifewood.com', role: 'app_admin', label: 'App Admin' },
+                        { id: 'support@lifewood.com', role: 'inquiry_admin', label: 'Inquiry Admin' }
+                      ].map((adm) => {
+                        const profile = adminProfiles.find(p => p.id === adm.id) || adm;
+                        const isSelected = editingAdmin?.id === adm.id;
+                        
+                        return (
+                          <div 
+                            key={adm.id}
+                            onClick={() => {
+                              setEditingAdmin(profile);
+                              setNewName(profile.displayName || '');
+                              setNewPhotoURL(profile.photoURL || '');
+                            }}
+                            className={`p-6 rounded-[32px] border transition-all cursor-pointer flex items-center gap-4 ${
+                              isSelected ? 'bg-black text-white border-black shadow-xl scale-[1.02]' : 'bg-white text-gray-900 border-gray-100 hover:border-gray-300'
+                            }`}
+                          >
+                            <div className={`w-12 h-12 rounded-full shrink-0 flex items-center justify-center font-bold text-sm ${isSelected ? 'bg-white/20 text-white' : 'bg-[#133020] text-white'}`}>
+                              {profile.photoURL ? (
+                                <img src={profile.photoURL} alt="" className="w-full h-full object-cover rounded-full" />
+                              ) : (
+                                (profile.displayName?.[0] || profile.id?.[0]?.toUpperCase() || 'A')
+                              )}
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-sm font-bold truncate">{profile.displayName || 'Unnamed Admin'}</span>
+                              <span className={`text-[9px] font-black uppercase tracking-widest ${isSelected ? 'text-white/60' : 'text-gray-400'}`}>
+                                {adm.label}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

@@ -25,6 +25,12 @@ service cloud.firestore {
       allow create, read: if request.auth != null;
       allow update, delete: if false;
     }
+
+    match /admin_profiles/{profileId} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null && (request.auth.token.email == 'admin@lifewood.com' || request.auth.token.admin == true);
+      allow delete: if false;
+    }
     match /{document=**} {
       allow read, write: if false;
     }
