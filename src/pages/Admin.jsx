@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, getIdTokenResult } from 'firebase/auth';
-import { collection, onSnapshot, doc, updateDoc, serverTimestamp, getDoc, deleteDoc, addDoc, query, orderBy, limit } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc, serverTimestamp, getDoc, deleteDoc, addDoc, query, orderBy, limit, writeBatch } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
-import { IoMenuOutline, IoCloseOutline, IoGridOutline, IoDocumentTextOutline, IoChatbubbleEllipsesOutline, IoChevronBackOutline, IoChevronForwardOutline, IoLogOutOutline, IoWarningOutline, IoMailOutline, IoLockClosedOutline, IoTimeOutline, IoPersonOutline, IoCheckmarkCircleOutline, IoSearchOutline, IoCalendarOutline, IoTrashOutline, IoChevronDownOutline, IoFilterOutline, IoNotificationsOutline, IoStarOutline, IoArchiveOutline, IoArrowBackOutline, IoArrowForwardOutline, IoCameraOutline, IoPulseOutline, IoListOutline, IoExpandOutline, IoContractOutline } from 'react-icons/io5';
+import { IoMenuOutline, IoCloseOutline, IoGridOutline, IoDocumentTextOutline, IoChatbubbleEllipsesOutline, IoChevronBackOutline, IoChevronForwardOutline, IoLogOutOutline, IoWarningOutline, IoMailOutline, IoLockClosedOutline, IoTimeOutline, IoPersonOutline, IoCheckmarkCircleOutline, IoSearchOutline, IoCalendarOutline, IoTrashOutline, IoChevronDownOutline, IoFilterOutline, IoNotificationsOutline, IoStarOutline, IoArchiveOutline, IoArrowBackOutline, IoArrowForwardOutline, IoCameraOutline, IoPulseOutline, IoListOutline, IoExpandOutline, IoContractOutline, IoCloudDownloadOutline, IoStatsChartOutline, IoEarthOutline } from 'react-icons/io5';
 import { motion, AnimatePresence } from 'motion/react';
 import emailjs from '@emailjs/browser';
 import logo from '../assets/logo.png';
@@ -317,6 +317,122 @@ function ActivityChart({ applications, messages }) {
     </div>
   );
 }
+
+function PositionsChartCard({ data }) {
+  const entries = Object.entries(data);
+  const max = Math.max(...entries.map(e => e[1]), 1);
+
+  return (
+    <div className="flex flex-col gap-4 p-8 bg-white rounded-[40px] border border-gray-100 shadow-sm flex-1 overflow-hidden">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Position Popularity</h3>
+          <p className="text-[10px] text-gray-400 font-medium">Distribution of applicants across roles</p>
+        </div>
+        <div className="w-10 h-10 rounded-2xl bg-black/5 flex items-center justify-center text-black">
+          <IoStatsChartOutline size={20} />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-5 mt-4">
+        {entries.slice(0, 5).map(([pos, count], idx) => (
+          <div key={pos} className="flex flex-col gap-2">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-xs font-bold text-gray-900 truncate max-w-[220px]">{pos}</span>
+              <span className="text-[10px] font-black text-gray-400">{count} applicants</span>
+            </div>
+            <div className="h-2 w-full bg-gray-50 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${(count / max) * 100}%` }}
+                className={`h-full rounded-full ${idx === 0 ? 'bg-black' : 'bg-gray-400'}`}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DemographicCard({ data }) {
+  const { countries, genders, ages } = data;
+  const topCountries = Object.entries(countries)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+  
+  const totalApps = Object.values(genders).reduce((a, b) => a + b, 0) || 1;
+
+  return (
+    <div className="flex flex-col gap-4 p-8 bg-white rounded-[40px] border border-gray-100 shadow-sm flex-1 overflow-hidden">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Advanced Analytics</h3>
+          <p className="text-[10px] text-gray-400 font-medium">Geographic & Demographic insights</p>
+        </div>
+        <div className="w-10 h-10 rounded-2xl bg-black/5 flex items-center justify-center text-black">
+          <IoEarthOutline size={20} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-6 mt-4">
+        <div className="flex flex-col gap-4">
+           <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-1">Global Reach</span>
+           <div className="flex flex-col gap-3">
+             {topCountries.map(([name, count]) => (
+               <div key={name} className="flex items-center gap-3">
+                 <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-[10px] font-bold border border-gray-100">{name[0]}</div>
+                 <div className="flex flex-col">
+                   <span className="text-xs font-bold text-gray-900 leading-tight truncate max-w-[80px]">{name}</span>
+                   <span className="text-[9px] text-gray-400 font-bold tracking-tight">{count} apps</span>
+                 </div>
+               </div>
+             ))}
+           </div>
+        </div>
+
+        <div className="flex flex-col gap-4 pl-4 border-l border-gray-100">
+           <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-1">Diversity</span>
+           <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <div className="flex justify-between text-[10px] font-bold px-0.5">
+                  <span className="text-gray-400">Male</span>
+                  <span className="text-gray-900">{Math.round(((genders['male'] || 0) / totalApps) * 100)}%</span>
+                </div>
+                <div className="h-1.5 w-full bg-gray-50 rounded-full overflow-hidden">
+                  <div className="h-full bg-blue-400 rounded-full transition-all duration-1000" style={{ width: `${((genders['male'] || 0) / totalApps) * 100}%` }} />
+                </div>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <div className="flex justify-between text-[10px] font-bold px-0.5">
+                  <span className="text-gray-400">Female</span>
+                  <span className="text-gray-900">{Math.round(((genders['female'] || 0) / totalApps) * 100)}%</span>
+                </div>
+                <div className="h-1.5 w-full bg-gray-50 rounded-full overflow-hidden">
+                  <div className="h-full bg-pink-400 rounded-full transition-all duration-1000" style={{ width: `${((genders['female'] || 0) / totalApps) * 100}%` }} />
+                </div>
+              </div>
+           </div>
+        </div>
+      </div>
+      
+      <div className="mt-4 pt-4 border-t border-gray-50">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest pl-1">Age Brackets</span>
+        </div>
+        <div className="flex gap-2">
+          {Object.entries(ages).map(([range, count]) => (
+            <div key={range} className="flex-1 flex flex-col items-center gap-1.5 p-2 bg-gray-50/50 rounded-2xl border border-gray-100">
+              <span className="text-[10px] font-bold text-gray-900">{count}</span>
+              <span className="text-[8px] font-black text-gray-400 uppercase tracking-tighter">{range}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 function OutcomeChartWidget({ applications }) {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
@@ -1703,6 +1819,76 @@ function LogDetailsModal({ isOpen, onClose, log }) {
   );
 }
 
+function ExportModal({ isOpen, onClose, onExport, dates, setDates }) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[2200] flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="relative w-full max-w-sm bg-white rounded-[40px] shadow-2xl border border-gray-100 p-10 flex flex-col items-center text-center"
+      >
+        <div className="w-20 h-20 mb-6 rounded-full flex items-center justify-center bg-[#133020]/10 text-[#133020]">
+          <IoCloudDownloadOutline size={40} />
+        </div>
+        <h3 className="text-2xl font-bold text-gray-900 mb-2">Export Data</h3>
+        <p className="text-gray-500 mb-8 leading-relaxed text-sm">
+          Select a date range for your report. Leave blank to export all matching records.
+        </p>
+
+        <div className="w-full flex flex-col gap-5 text-left mb-10">
+          <div className="flex flex-col gap-2">
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">From</label>
+            <input
+              type="date"
+              value={dates.start}
+              onChange={(e) => setDates(prev => ({ ...prev, start: e.target.value }))}
+              className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-black/5 transition-all focus:bg-white focus:border-black"
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">To</label>
+            <input
+              type="date"
+              value={dates.end}
+              onChange={(e) => setDates(prev => ({ ...prev, end: e.target.value }))}
+              className="w-full px-5 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-black/5 transition-all focus:bg-white focus:border-black"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3 w-full">
+          <button
+            onClick={() => {
+              onExport();
+              onClose();
+            }}
+            className="w-full py-4 bg-black hover:bg-gray-800 text-white rounded-2xl text-sm font-bold transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2"
+          >
+            <IoCloudDownloadOutline size={18} />
+            Generate CSV Report
+          </button>
+          <button
+            onClick={onClose}
+            className="w-full py-4 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-2xl text-sm font-bold transition-all"
+          >
+            Close
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 export default function Admin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -1715,13 +1901,13 @@ export default function Admin() {
   const navWithIcons = useMemo(() => {
     const all = [
       { id: "dashboard", label: "Dashboard", icon: <IoGridOutline size={20} /> },
-      { id: "applications", label: "Applications", icon: <IoDocumentTextOutline size={20} />, permission: 'app_admin' },
+      { id: "applications", label: "Applications", icon: <IoDocumentTextOutline size={20} />, permission: 'hr_admin' },
       { id: "messages", label: "Messages", icon: <IoChatbubbleEllipsesOutline size={20} />, permission: 'inquiry_admin' },
       { id: "logs", label: "Activity Logs", icon: <IoListOutline size={20} />, permission: 'super_admin' },
     ];
     
     if (adminRole === 'super_admin') return all;
-    if (adminRole === 'app_admin') return [all[0], all[1]];
+    if (adminRole === 'hr_admin') return [all[0], all[1]];
     if (adminRole === 'inquiry_admin') return [all[0], all[2]];
     return [all[0]];
   }, [adminRole]);
@@ -1812,6 +1998,20 @@ export default function Admin() {
     withdrew: 1,
     trash: 1,
   });
+  const [appStartDate, setAppStartDate] = useState('');
+  const [appEndDate, setAppEndDate] = useState('');
+  const [msgStartDate, setMsgStartDate] = useState('');
+  const [msgEndDate, setMsgEndDate] = useState('');
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportTarget, setExportTarget] = useState('applications'); // 'applications' or 'messages'
+  const [exportDates, setExportDates] = useState({ start: '', end: '' });
+  const [selectedAppIds, setSelectedAppIds] = useState([]);
+  const [selectedMsgIds, setSelectedMsgIds] = useState([]);
+
+  useEffect(() => {
+    setSelectedAppIds([]);
+    setSelectedMsgIds([]);
+  }, [activeTab]);
 
   useEffect(() => {
     setColumnPages({
@@ -1830,6 +2030,36 @@ export default function Admin() {
 
   const nonDeletedApps = useMemo(() => applications.filter(a => !a.deleted), [applications]);
   const nonDeletedMsgs = useMemo(() => messages.filter(m => !m.deleted), [messages]);
+
+  const demographicsData = useMemo(() => {
+    const countries = {};
+    const genders = {};
+    const ages = { '18-25': 0, '26-35': 0, '36-45': 0, '46+': 0 };
+
+    nonDeletedApps.forEach(app => {
+      const country = app.country || 'Unknown';
+      countries[country] = (countries[country] || 0) + 1;
+      const gender = app.gender || 'Unknown';
+      genders[gender] = (genders[gender] || 0) + 1;
+      const age = Number(app.age);
+      if (age >= 18 && age <= 25) ages['18-25']++;
+      else if (age >= 26 && age <= 35) ages['26-35']++;
+      else if (age >= 36 && age <= 45) ages['36-45']++;
+      else if (age >= 46) ages['46+']++;
+    });
+    return { countries, genders, ages };
+  }, [nonDeletedApps]);
+
+  const positionsData = useMemo(() => {
+    const counts = {};
+    nonDeletedApps.forEach(app => {
+      const pos = app.positionApplied || 'Unknown';
+      counts[pos] = (counts[pos] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .reduce((acc, [k, v]) => ({ ...acc, [k]: v }), {});
+  }, [nonDeletedApps]);
 
   const allowedAdminEmails = useMemo(
     () =>
@@ -1862,7 +2092,7 @@ export default function Admin() {
       if (email === 'admin@lifewood.com') {
         setAdminRole('super_admin');
       } else if (email === 'applicants@lifewood.com') {
-        setAdminRole('app_admin');
+        setAdminRole('hr_admin');
       } else if (email === 'support@lifewood.com') {
         setAdminRole('inquiry_admin');
       } else if (claimAdmin || emailAdmin) {
@@ -1898,7 +2128,7 @@ export default function Admin() {
             id: currentUser.email, 
             displayName: currentUser.displayName || '', 
             photoURL: currentUser.photoURL || '',
-            role: adminRole
+            role: adminRole === 'hr_admin' ? 'hr_admin' : adminRole
           };
           setEditingAdmin(fallbackProfile);
           setNewName(fallbackProfile.displayName);
@@ -2029,8 +2259,49 @@ export default function Admin() {
       }
       
       setActionMessage({ text: 'Profile updated successfully!', type: 'success' });
+      
+      // Log the action
+      await logAction('profile_update', editingAdmin.id, editingAdmin.displayName || editingAdmin.id, { 
+        newName: newName || editingAdmin.displayName,
+        updatedFields: ['displayName']
+      });
     } catch (error) {
       setActionMessage({ text: error?.message || 'Failed to update profile.', type: 'error' });
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
+
+  const handleRemoveProfileImage = async () => {
+    if (!editingAdmin || adminRole !== 'super_admin') return;
+    setIsUpdatingProfile(true);
+    setActionMessage(null);
+
+    try {
+      // 1. Update Firestore admin_profiles
+      await updateDoc(doc(db, 'admin_profiles', editingAdmin.id), {
+        photoURL: null,
+        updatedAt: serverTimestamp()
+      });
+
+      // 2. Clear local state
+      setNewPhotoURL('');
+
+      // 3. If editing self, mirror to Auth
+      if (editingAdmin.id === currentUser.email) {
+        await updateProfile(auth.currentUser, {
+          photoURL: null
+        });
+        await auth.currentUser.reload();
+        setCurrentUser({...auth.currentUser});
+      }
+
+      // 4. Log the action
+      await logAction('profile_image_remove', editingAdmin.id, editingAdmin.displayName || editingAdmin.id);
+
+      setActionMessage({ text: 'Profile image removed successfully!', type: 'success' });
+    } catch (error) {
+      setActionMessage({ text: error?.message || 'Failed to remove profile image.', type: 'error' });
     } finally {
       setIsUpdatingProfile(false);
     }
@@ -2070,6 +2341,10 @@ export default function Admin() {
         await auth.currentUser.reload();
         setCurrentUser({...auth.currentUser});
       }
+
+      // Log the action
+      await logAction('profile_image_update', editingAdmin.id, editingAdmin.displayName || editingAdmin.id);
+
       setActionMessage({ text: 'Profile image updated successfully!', type: 'success' });
     } catch (error) {
       setActionMessage({ text: error?.message || 'Failed to upload image.', type: 'error' });
@@ -2274,15 +2549,85 @@ export default function Admin() {
           time: scheduleData.time 
         });
       }
-
-      setActionMessage({
-        text: isRescheduling
-          ? `Interview rescheduled for ${scheduleData.date} at ${scheduleData.time}.`
-          : `Interview scheduled for ${scheduleData.date} at ${scheduleData.time}.`,
-        type: 'success'
-      });
+      setActionMessage({ text: `Interview successfully scheduled for ${scheduleData.date}.`, type: 'success' });
     } catch (error) {
       setActionMessage({ text: error?.message || 'Unable to schedule interview.', type: 'error' });
+    }
+  };
+
+  const handleBatchStatusUpdateApplications = async (status) => {
+    if (selectedAppIds.length === 0) return;
+    setIsDataLoading(true);
+    setActionMessage(null);
+    const count = selectedAppIds.length;
+    try {
+      const batch = writeBatch(db);
+      selectedAppIds.forEach((id) => {
+        const ref = doc(db, 'applications', id);
+        const updateData = {
+          updatedAt: serverTimestamp(),
+        };
+
+        if (status === 'trash') {
+          updateData.deleted = true;
+          updateData.deletedAt = serverTimestamp();
+        } else if (status === 'restore') {
+          updateData.deleted = false;
+          updateData.status = 'pending';
+        } else {
+          updateData.status = status;
+          if (status === 'accepted' || status === 'rejected') {
+            updateData.decisionAt = serverTimestamp();
+          }
+        }
+        
+        batch.update(ref, updateData);
+      });
+      await batch.commit();
+      
+      setSelectedAppIds([]);
+      setActionMessage({ text: `Bulk action complete. ${count} applications updated.`, type: 'success' });
+      await logAction('batch_app_update', 'multiple', `Bulk update to ${status}`, { count, status });
+    } catch (error) {
+      setActionMessage({ text: error?.message || 'Batch update failed.', type: 'error' });
+    } finally {
+      setIsDataLoading(false);
+    }
+  };
+
+  const handleBatchStatusUpdateMessages = async (status) => {
+    if (selectedMsgIds.length === 0) return;
+    setIsDataLoading(true);
+    setActionMessage(null);
+    const count = selectedMsgIds.length;
+    try {
+      const batch = writeBatch(db);
+      selectedMsgIds.forEach((id) => {
+        const ref = doc(db, 'messages', id);
+        const updateData = {
+          updatedAt: serverTimestamp(),
+        };
+
+        if (status === 'trash') {
+          updateData.deleted = true;
+          updateData.deletedAt = serverTimestamp();
+        } else if (status === 'restore') {
+          updateData.deleted = false;
+        } else {
+          updateData.status = status;
+        }
+        
+        batch.update(ref, updateData);
+      });
+      await batch.commit();
+      
+      setSelectedMsgIds([]);
+      setActionMessage({ text: `Bulk action complete. ${count} inquiries updated.`, type: 'success' });
+      await logAction('batch_msg_update', 'multiple', `Bulk update to ${status}`, { count, status });
+    } catch (error) {
+      setActionMessage({ text: error?.message || 'Batch update failed.', type: 'error' });
+    } finally {
+      setIsDataLoading(false);
     }
   };
 
@@ -2367,6 +2712,166 @@ export default function Admin() {
     } catch (error) {
       setActionMessage({ text: error?.message || 'Unable to restore message.', type: 'error' });
     }
+  };
+
+  const handleExportToCSV = () => {
+    if (filteredApps.length === 0) {
+      setActionMessage({ text: 'No data to export with current filters.', type: 'error' });
+      return;
+    }
+
+    // Date Range Filtering
+    let dateMatchApps = filteredApps;
+    if (exportDates.start || exportDates.end) {
+      dateMatchApps = filteredApps.filter(app => {
+        const createTime = app.createdAt?.toMillis ? app.createdAt.toMillis() : new Date(app.createdAt || 0).getTime();
+        if (exportDates.start) {
+          const start = new Date(exportDates.start).setHours(0, 0, 0, 0);
+          if (createTime < start) return false;
+        }
+        if (exportDates.end) {
+          const end = new Date(exportDates.end).setHours(23, 59, 59, 999);
+          if (createTime > end) return false;
+        }
+        return true;
+      });
+    }
+
+    if (dateMatchApps.length === 0) {
+      setActionMessage({ text: 'No data to export for the selected date range.', type: 'error' });
+      return;
+    }
+
+    const headers = [
+      'First Name',
+      'Last Name',
+      'Email',
+      'Phone',
+      'Position',
+      'Status',
+      'Applied Date',
+      'Interview Date',
+      'Gender',
+      'Age',
+      'Country',
+      'Current Address'
+    ];
+
+    const rows = dateMatchApps.map(app => {
+      const csvRow = [
+        app.firstName || '',
+        app.lastName || '',
+        app.emailAddress || '',
+        app.phoneNumber || '',
+        app.positionApplied || '',
+        app.status || 'pending',
+        app.createdAt?.toDate ? app.createdAt.toDate().toLocaleString().replace(/,/g, ' ') : '',
+        app.interviewScheduledAt?.toDate ? app.interviewScheduledAt.toDate().toLocaleString().replace(/,/g, ' ') : '',
+        app.gender || '',
+        app.age || '',
+        app.country || '',
+        (app.currentAddress || '').replace(/,/g, ' ').replace(/\n/g, ' ') // Escape commas and newlines
+      ];
+      // Escape each value to prevent CSV injection and handle quotes
+      return csvRow.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',');
+    });
+
+    const csvContent = [
+      headers.join(','),
+      ...rows
+    ].join('\n');
+
+    const fileName = `Lifewood_Applications_${new Date().toISOString().split('T')[0]}.csv`;
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    
+    if (navigator.msSaveBlob) { // IE 10+
+      navigator.msSaveBlob(blob, fileName);
+    } else {
+      const link = document.createElement('a');
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', fileName);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    }
+
+    logAction('data_export', 'applications_csv', 'Applications CSV Report', { count: filteredApps.length });
+    setActionMessage({ text: `Successfully exported ${filteredApps.length} records.`, type: 'success' });
+  };
+
+  const handleExportMessagesToCSV = () => {
+    if (filteredMsgs.length === 0) {
+      setActionMessage({ text: 'No data to export with current filters.', type: 'error' });
+      return;
+    }
+
+    // Date Range Filtering
+    let dateMatchMsgs = filteredMsgs;
+    if (exportDates.start || exportDates.end) {
+      dateMatchMsgs = filteredMsgs.filter(msg => {
+        const msgTime = msg.createdAt?.toMillis ? msg.createdAt.toMillis() : new Date(msg.createdAt || 0).getTime();
+        if (exportDates.start) {
+          const start = new Date(exportDates.start).setHours(0, 0, 0, 0);
+          if (msgTime < start) return false;
+        }
+        if (exportDates.end) {
+          const end = new Date(exportDates.end).setHours(23, 59, 59, 999);
+          if (msgTime > end) return false;
+        }
+        return true;
+      });
+    }
+
+    if (dateMatchMsgs.length === 0) {
+      setActionMessage({ text: 'No data to export for the selected date range.', type: 'error' });
+      return;
+    }
+
+    const headers = [
+      'Name',
+      'Email',
+      'Subject',
+      'Status',
+      'Message',
+      'Date'
+    ];
+
+    const rows = dateMatchMsgs.map(msg => {
+      const csvRow = [
+        msg.name || '',
+        msg.email || '',
+        msg.subject || '',
+        msg.status || 'new',
+        (msg.message || '').replace(/,/g, ' ').replace(/\n/g, ' '),
+        msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleString().replace(/,/g, ' ') : ''
+      ];
+      // Escape each value to prevent CSV injection and handle quotes
+      return csvRow.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',');
+    });
+
+    const csvContent = [
+      headers.join(','),
+      ...rows
+    ].join('\n');
+
+    const fileName = `Lifewood_Inquiries_${new Date().toISOString().split('T')[0]}.csv`;
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', fileName);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    logAction('data_export', 'messages_csv', 'Inquiries CSV Report', { count: filteredMsgs.length });
+    setActionMessage({ text: `Successfully exported ${filteredMsgs.length} records.`, type: 'success' });
   };
 
   // Auto-cleanup rejected applications older than 7 days
@@ -2955,7 +3460,7 @@ export default function Admin() {
           </div>
           <NotificationBell 
             applications={adminRole === 'inquiry_admin' ? [] : applications} 
-            messages={adminRole === 'app_admin' ? [] : messages} 
+            messages={adminRole === 'hr_admin' ? [] : messages} 
             onItemClick={(item) => item.type === 'application' ? setSelectedAppDetails(item) : setSelectedMessage(item)}
           />
         </header>
@@ -3009,6 +3514,74 @@ export default function Admin() {
                 onConfirm={handleStatusUpdate}
               />
             )}
+            {showExportModal && (
+              <ExportModal
+                isOpen={showExportModal}
+                onClose={() => setShowExportModal(false)}
+                onExport={exportTarget === 'applications' ? handleExportToCSV : handleExportMessagesToCSV}
+                dates={exportDates}
+                setDates={setExportDates}
+              />
+            )}
+            {(selectedAppIds.length > 0 || selectedMsgIds.length > 0) && (
+              <motion.div
+                initial={{ y: 100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 100, opacity: 0 }}
+                className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[1500] bg-black text-white px-8 py-5 rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center gap-10 border border-white/10 backdrop-blur-xl"
+              >
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl font-black leading-none">{selectedAppIds.length || selectedMsgIds.length}</span>
+                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 mt-1">Selected</span>
+                </div>
+                <div className="h-10 w-px bg-white/20"></div>
+                <div className="flex items-center gap-4">
+                  {activeTab === 'applications' ? (
+                    <>
+                      <button
+                        onClick={() => handleBatchStatusUpdateApplications('pending')}
+                        className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 border border-white/5"
+                      >
+                        Reset Status
+                      </button>
+                      <button
+                        onClick={() => handleBatchStatusUpdateApplications('trash')}
+                        className="px-6 py-3 bg-red-500/80 hover:bg-red-500 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2"
+                      >
+                        <IoTrashOutline size={14} />
+                        Trash
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => handleBatchStatusUpdateMessages('resolved')}
+                        className="px-6 py-3 bg-green-500/80 hover:bg-green-500 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2"
+                      >
+                        <IoCheckmarkCircleOutline size={14} />
+                        Mark Resolved
+                      </button>
+                      <button
+                        onClick={() => handleBatchStatusUpdateMessages('trash')}
+                        className="px-6 py-3 bg-red-500/80 hover:bg-red-500 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2"
+                      >
+                        <IoTrashOutline size={14} />
+                        Trash
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={() => {
+                      setSelectedAppIds([]);
+                      setSelectedMsgIds([]);
+                    }}
+                    className="px-6 py-3 text-gray-400 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </motion.div>
+            )}
           </AnimatePresence>
                 {isDataLoading && (
                   <div className="mb-6 mx-4 sm:mx-0 flex items-center gap-4 p-4 bg-[#133020]/5 rounded-3xl border border-[#133020]/10 animate-pulse">
@@ -3022,6 +3595,34 @@ export default function Admin() {
             <div className="flex flex-col gap-6">
               <div className="flex items-center justify-between w-full">
                 <h1 className="text-3xl font-bold text-gray-900 m-0">Welcome Back!</h1>
+                <div className="flex gap-3">
+                  {(adminRole === 'super_admin' || adminRole === 'app_admin' || adminRole === 'hr_admin') && (
+                    <button
+                      onClick={() => {
+                        setExportTarget('applications');
+                        setShowExportModal(true);
+                        setExportDates({ start: '', end: '' });
+                      }}
+                      className="hidden sm:flex items-center gap-2 px-6 py-3 bg-white text-black border border-gray-100 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all active:scale-95 shadow-sm"
+                    >
+                      <IoCloudDownloadOutline size={16} />
+                      Export Applications
+                    </button>
+                  )}
+                  {(adminRole === 'super_admin' || adminRole === 'inquiry_admin') && (
+                    <button
+                      onClick={() => {
+                        setExportTarget('messages');
+                        setShowExportModal(true);
+                        setExportDates({ start: '', end: '' });
+                      }}
+                      className="hidden sm:flex items-center gap-2 px-6 py-3 bg-white text-black border border-gray-100 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all active:scale-95 shadow-sm"
+                    >
+                      <IoCloudDownloadOutline size={16} />
+                      Export Inquiries
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full items-start">
@@ -3050,7 +3651,7 @@ export default function Admin() {
                     </div>
 
                     <div className={`relative z-10 grid grid-cols-2 ${adminRole === 'super_admin' ? 'lg:grid-cols-5' : 'lg:grid-cols-3'} gap-10 w-full pt-8 border-t border-black/5`}>
-                      {(adminRole === 'super_admin' || adminRole === 'app_admin') && (
+                      {(adminRole === 'super_admin' || adminRole === 'hr_admin') && (
                         <>
                           <div className="transition-all">
                             <h3 className="text-[10px] font-bold text-black tracking-widest mb-2">Total Applications</h3>
@@ -3062,7 +3663,7 @@ export default function Admin() {
                           </div>
                         </>
                       )}
-                      {(adminRole === 'super_admin' || adminRole === 'app_admin') && (
+                      {(adminRole === 'super_admin' || adminRole === 'hr_admin') && (
                         <div className="transition-all">
                           <h3 className="text-[10px] font-bold text-black tracking-widest mb-2">Pending Review</h3>
                           <div className="text-4xl font-bold text-gray-900 leading-none">{stats.pendingApps}</div>
@@ -3086,7 +3687,7 @@ export default function Admin() {
                     <div className={`flex-[3] min-w-0 h-full ${adminRole !== 'super_admin' ? 'w-full' : ''}`}>
                       <ActivityChart 
                         applications={adminRole === 'inquiry_admin' ? [] : nonDeletedApps} 
-                        messages={adminRole === 'app_admin' ? [] : nonDeletedMsgs} 
+                        messages={adminRole === 'hr_admin' ? [] : nonDeletedMsgs} 
                       />
                     </div>
                     {adminRole !== 'inquiry_admin' && (
@@ -3095,8 +3696,20 @@ export default function Admin() {
                       </div>
                     )}
                   </div>
+
+                  {/* Advanced Analytics & Demographics Row */}
+                  {(adminRole === 'super_admin' || adminRole === 'hr_admin') && (
+                    <div className="flex flex-col xl:flex-row gap-6 w-full items-stretch xl:h-[420px] h-auto mb-6">
+                       <div className="flex-1 min-w-0 h-full">
+                         <PositionsChartCard data={positionsData} />
+                       </div>
+                       <div className="flex-1 min-w-0 h-full">
+                         <DemographicCard data={demographicsData} />
+                       </div>
+                    </div>
+                  )}
                   <div className={`grid gap-6 ${adminRole === 'super_admin' ? 'grid-cols-1 xl:grid-cols-2' : 'grid-cols-1'}`}>
-                    {(adminRole === 'super_admin' || adminRole === 'app_admin') && (
+                    {(adminRole === 'super_admin' || adminRole === 'hr_admin') && (
                       <RecentActivityCard
                         title="Recent Applications"
                         items={nonDeletedApps}
@@ -3118,9 +3731,9 @@ export default function Admin() {
                 <div className="lg:col-span-1 w-full flex flex-col gap-6">
                   <CalendarWidget 
                     applications={adminRole === 'inquiry_admin' ? [] : nonDeletedApps} 
-                    messages={adminRole === 'app_admin' ? [] : nonDeletedMsgs} 
+                    messages={adminRole === 'hr_admin' ? [] : nonDeletedMsgs} 
                   />
-                  {(adminRole === 'super_admin' || adminRole === 'app_admin') && (
+                  {(adminRole === 'super_admin' || adminRole === 'hr_admin') && (
                     <ScheduledInterviewsCard interviews={upcomingInterviews} onItemClick={setSelectedAppDetails} />
                   )}
                 </div>
@@ -3128,7 +3741,7 @@ export default function Admin() {
             </div>
           )}
 
-          {(activeTab === 'applications' && (adminRole === 'super_admin' || adminRole === 'app_admin')) && (
+          {(activeTab === 'applications' && (adminRole === 'super_admin' || adminRole === 'hr_admin')) && (
             <div className="flex flex-col gap-6">
               <div className="px-4 sm:px-0">
                 <h1 className="text-2xl font-bold text-gray-900 m-0">Applications</h1>
@@ -3159,8 +3772,20 @@ export default function Admin() {
                     prefix="Position"
                     dropdownClassName="w-full sm:min-w-[320px] sm:w-auto"
                   />
+                  <button
+                    onClick={() => {
+                      setExportTarget('applications');
+                      setShowExportModal(true);
+                      setExportDates({ start: '', end: '' });
+                    }}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-black text-white rounded-xl text-xs font-bold hover:bg-gray-800 transition-all active:scale-95 shadow-md shrink-0 sm:w-auto w-full justify-center"
+                  >
+                    <IoCloudDownloadOutline size={18} />
+                    Download Reports
+                  </button>
                 </div>
               </div>
+
 
               <div className={`grid gap-6 w-full items-start transition-all duration-300 ${expandedColumn ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
                 {[
@@ -3230,7 +3855,26 @@ export default function Admin() {
                             style={{ gridTemplateColumns: '200px 200px 220px 140px 110px 120px' }}
                             className="grid items-center px-5 py-2.5 border-b border-gray-100 bg-gray-50/70 sticky top-0 gap-4"
                           >
-                            <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Name</div>
+                            <div className="flex items-center gap-3">
+                              <div 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const allIds = pagedItems.map(i => i.id);
+                                  const currentlySelectedInThisView = selectedAppIds.filter(id => allIds.includes(id));
+                                  if (currentlySelectedInThisView.length === allIds.length && allIds.length > 0) {
+                                    setSelectedAppIds(prev => prev.filter(id => !allIds.includes(id)));
+                                  } else {
+                                    setSelectedAppIds(prev => [...new Set([...prev, ...allIds])]);
+                                  }
+                                }}
+                                className={`w-4 h-4 rounded-md border-2 flex items-center justify-center transition-all cursor-pointer ${
+                                  pagedItems.length > 0 && pagedItems.every(i => selectedAppIds.includes(i.id)) ? 'bg-black border-black shadow-sm' : 'bg-transparent border-gray-300 hover:border-black'
+                                }`}
+                              >
+                                {pagedItems.length > 0 && pagedItems.every(i => selectedAppIds.includes(i.id)) && <IoCheckmarkCircleOutline size={12} className="text-white" />}
+                              </div>
+                              <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Name</div>
+                            </div>
                             <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Position Applied</div>
                             <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Email</div>
                             <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Date Applied</div>
@@ -3245,9 +3889,27 @@ export default function Admin() {
                                 key={item.id}
                                 onClick={() => setSelectedAppDetails(item)}
                                 style={isExpanded ? { gridTemplateColumns: '200px 200px 220px 140px 110px 120px' } : {}}
-                                className={`hover:bg-black/5 transition-colors cursor-pointer group ${idx !== pagedItems.length - 1 ? 'border-b border-gray-100' : ''} ${isExpanded ? 'grid items-center gap-4 px-5 py-3' : 'p-5 flex flex-col gap-3'}`}
+                                className={`hover:bg-black/5 transition-colors cursor-pointer group relative ${idx !== pagedItems.length - 1 ? 'border-b border-gray-100' : ''} ${isExpanded ? 'grid items-center gap-4 px-5 py-3' : 'p-5 flex flex-col gap-3'} ${selectedAppIds.includes(item.id) ? 'bg-black/[0.02]' : ''}`}
                               >
-                                {/* ... (rest of applicant item remains the same) */}
+                                {/* Selection Checkbox */}
+                                <div className={`absolute top-5 right-5 z-[5] sm:static flex items-center justify-center`} onClick={(e) => e.stopPropagation()}>
+                                  <div 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const isSelected = selectedAppIds.includes(item.id);
+                                      if (isSelected) {
+                                        setSelectedAppIds(prev => prev.filter(id => id !== item.id));
+                                      } else {
+                                        setSelectedAppIds(prev => [...prev, item.id]);
+                                      }
+                                    }}
+                                    className={`w-4 h-4 rounded-md border-2 flex items-center justify-center transition-all cursor-pointer ${
+                                      selectedAppIds.includes(item.id) ? 'bg-black border-black shadow-sm' : 'bg-transparent border-gray-300 hover:border-black'
+                                    }`}
+                                  >
+                                    {selectedAppIds.includes(item.id) && <IoCheckmarkCircleOutline size={12} className="text-white" />}
+                                  </div>
+                                </div>
                                 {/* Avatar + Name */}
                                 <div className="flex items-center gap-3 overflow-hidden">
                                   <div className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center text-[10px] font-bold shrink-0 border border-black group-hover:scale-105 transition-transform">
@@ -3522,6 +4184,17 @@ export default function Admin() {
                       value={msgStatusFilter}
                       onChange={(val) => setMsgStatusFilter(val)}
                     />
+                    <button
+                      onClick={() => {
+                        setExportTarget('messages');
+                        setShowExportModal(true);
+                        setExportDates({ start: '', end: '' });
+                      }}
+                      className="flex items-center gap-2 px-6 py-2.5 bg-black text-white rounded-xl text-xs font-bold hover:bg-gray-800 transition-all active:scale-95 shadow-md shrink-0 sm:w-auto w-full justify-center"
+                    >
+                      <IoCloudDownloadOutline size={18} />
+                      Download Reports
+                    </button>
                   </div>
                 </div>
               </div>
@@ -3531,6 +4204,25 @@ export default function Admin() {
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-gray-50/50 border-b border-gray-100">
+                        <th className="px-5 py-6 w-10">
+                          <div 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const allIds = pagedMsgs.map(m => m.id);
+                              const currentlySelectedInThisView = selectedMsgIds.filter(id => allIds.includes(id));
+                              if (currentlySelectedInThisView.length === allIds.length && allIds.length > 0) {
+                                setSelectedMsgIds(prev => prev.filter(id => !allIds.includes(id)));
+                              } else {
+                                setSelectedMsgIds(prev => [...new Set([...prev, ...allIds])]);
+                              }
+                            }}
+                            className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer ${
+                              pagedMsgs.length > 0 && pagedMsgs.every(m => selectedMsgIds.includes(m.id)) ? 'bg-black border-black shadow-md' : 'bg-transparent border-gray-200 hover:border-black'
+                            }`}
+                          >
+                            {pagedMsgs.length > 0 && pagedMsgs.every(m => selectedMsgIds.includes(m.id)) && <IoCheckmarkCircleOutline size={14} className="text-white" />}
+                          </div>
+                        </th>
                         <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Sender</th>
                         <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Subject</th>
                         <th className="px-8 py-6 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Status</th>
@@ -3544,8 +4236,26 @@ export default function Admin() {
                           <tr 
                             key={item.id} 
                             onClick={() => setSelectedMessage(item)}
-                            className="hover:bg-gray-50/30 transition-colors group cursor-pointer"
+                            className={`hover:bg-gray-50/30 transition-colors group cursor-pointer ${selectedMsgIds.includes(item.id) ? 'bg-black/[0.02]' : ''}`}
                           >
+                            <td className="px-5 py-5" onClick={(e) => e.stopPropagation()}>
+                              <div 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const isSelected = selectedMsgIds.includes(item.id);
+                                  if (isSelected) {
+                                    setSelectedMsgIds(prev => prev.filter(id => id !== item.id));
+                                  } else {
+                                    setSelectedMsgIds(prev => [...prev, item.id]);
+                                  }
+                                }}
+                                className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer ${
+                                  selectedMsgIds.includes(item.id) ? 'bg-black border-black shadow-md' : 'bg-transparent border-gray-200 hover:border-black'
+                                }`}
+                              >
+                                {selectedMsgIds.includes(item.id) && <IoCheckmarkCircleOutline size={14} className="text-white" />}
+                              </div>
+                            </td>
                             <td className="px-8 py-5">
                               <div className="flex items-center gap-4">
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-black shadow-lg shadow-black/5 transition-transform group-hover:scale-105 ${
@@ -3700,7 +4410,7 @@ export default function Admin() {
                                 </div>
                                 <div className="flex flex-col">
                                   <span className="text-sm font-bold text-gray-900">{log.adminEmail}</span>
-                                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{log.adminRole?.replace('_', ' ')}</span>
+                                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{log.adminRole?.replace('hr_admin', 'HR Admin').replace('_', ' ')}</span>
                                 </div>
                               </div>
                             </td>
@@ -3824,10 +4534,22 @@ export default function Admin() {
                         )}
                       </div>
                         {adminRole === 'super_admin' && (
-                          <label className="absolute bottom-1 right-1 w-12 h-12 bg-[#FFB347] text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:bg-[#ffb347]/90 transition-all group-hover:scale-110 border-4 border-white active:scale-95">
-                            <input type="file" className="hidden" accept="image/*" onChange={handleProfileImageUpload} disabled={isUpdatingProfile} />
-                            <IoCameraOutline size={22} />
-                          </label>
+                          <div className="absolute bottom-1 right-1 flex flex-col gap-2">
+                            <label className="w-12 h-12 bg-[#FFB347] text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:bg-[#ffb347]/90 transition-all group-hover:scale-110 border-4 border-white active:scale-95">
+                              <input type="file" className="hidden" accept="image/*" onChange={handleProfileImageUpload} disabled={isUpdatingProfile} />
+                              <IoCameraOutline size={22} />
+                            </label>
+                            {(newPhotoURL || editingAdmin?.photoURL) && (
+                              <button
+                                onClick={handleRemoveProfileImage}
+                                disabled={isUpdatingProfile}
+                                className="w-12 h-12 bg-red-500 text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:bg-red-600 transition-all group-hover:scale-110 border-4 border-white active:scale-95"
+                                title="Remove Profile Photo"
+                              >
+                                <IoTrashOutline size={18} />
+                              </button>
+                            )}
+                          </div>
                         )}
                       </div>
 
@@ -3881,7 +4603,7 @@ export default function Admin() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {[
                         { id: 'admin@lifewood.com', role: 'super_admin', label: 'Super Admin' },
-                        { id: 'applicants@lifewood.com', role: 'app_admin', label: 'App Admin' },
+                        { id: 'applicants@lifewood.com', role: 'hr_admin', label: 'HR Admin' },
                         { id: 'support@lifewood.com', role: 'inquiry_admin', label: 'Inquiry Admin' }
                       ].map((adm) => {
                         const profile = adminProfiles.find(p => p.id === adm.id) || adm;
